@@ -10,7 +10,7 @@
 
 ## 40、最小的K个数
 
-### 1、快排思路
+**1、快排思路**
 
 ```java
 	public int[] getLeastNumbers(int[] arr, int k) {
@@ -50,7 +50,7 @@
     }
 ```
 
-### 2、堆
+**2、堆**
 
 ```java
 	public int[] getLeastNumbers(int[] arr, int k) {
@@ -321,7 +321,7 @@ class MedianFinder {
 
 ## 47、礼物的最大价值
 
-### 1、动态规划
+**1、动态规划**
 
 > 状态转移方程 
 >
@@ -429,6 +429,52 @@ class MedianFinder {
 
 
 
+## 51、数组中的逆序对
+
+> 思路： 归并排序 ，如果左边最大的大于右边最大的
+>
+> 那么result += left -mid个
+
+```java
+	class Solution {
+        int result = 0;
+
+        public int reversePairs(int[] nums) {
+            if (nums == null || nums.length < 2) return 0;
+            mSort(nums, 0, nums.length - 1);
+            return result;
+        }
+
+        private void mSort(int[] nums, int l, int r) {
+            if (l < r) {
+                int mid = l + (r - l) / 2;
+                mSort(nums, l, mid);
+                mSort(nums, mid + 1, r);
+                mergeSort(nums, l, mid, r);
+            }
+
+        }
+
+        private void mergeSort(int[] nums, int l, int mid, int r) {
+            int[] help = new int[r - l + 1];
+            int p = help.length - 1;
+            int temp = mid + 1;
+            while (mid >= l && r >= temp) {
+                result += nums[mid] > nums[r] ? r - temp + 1 : 0;
+                help[p--] = nums[mid] > nums[r] ? nums[mid--] : nums[r--];
+            }
+            while (r >= temp) help[p--] = nums[r--];
+            while (mid >= l) help[p--] = nums[mid--];
+            for (int i = 0; i < help.length; i++) {
+                nums[l + i] = help[i];
+            }
+        }
+```
+
+
+
+
+
 ## 52、两个链表的第一个公共节点
 
 ```java
@@ -472,11 +518,376 @@ class MedianFinder {
     }
 ```
 
+## 53_II、0～n-1中缺失的数字
+
+> 思路：二分
+
+```java
+	class Solution {
+        public int missingNumber(int[] nums) {
+            int l = 0;
+            int r = nums.length - 1;
+            while (l <= r) {
+                int mid = (l + r) / 2;
+                if(nums[mid] == mid){
+                    l = mid+1;
+                }else{
+                    r = mid-1;
+                }
+            }
+            return l;
+        }
+```
+
+## 54、二叉搜索树的第k大节点
+
+> 思路：逆中序遍历
+
+```java
+class Solution {
+    //思路：二插搜索树的中序遍历递增有序的（左中右）
+    //所以要寻找第k大个只需要逆中序遍历就可以
+    //逆中序遍历的是递减的（右中左）
+    int res,k;
+    public int kthLargest(TreeNode root, int k) {
+        if(root == null) return 0;
+        this.k = k;
+        reverseMiddleOrder(root);
+        return res;
+    }
+
+    private void reverseMiddleOrder(TreeNode root) {
+        if(root!=null){
+            reverseMiddleOrder(root.right);
+            if(--k ==0) {
+                res = root.val;
+                return;
+            }
+            reverseMiddleOrder(root.left);
+        }
+
+    }
+}
+```
+
+## 55_I、二叉树的深度
+
+```java
+class Solution {
+        public int maxDepth(TreeNode root) {
+            return root == null ? 0 : Math.max(maxDepth(root.left), maxDepth(root.right)) + 1;
+        }
+
+    }
+```
+
+## 55_II、平衡二叉树
+
+> 上面一题的复用
+
+```java
+class Solution {
+        //思路：二叉树最大深度的复用
+        public boolean isBalanced(TreeNode root) {
+            if(root == null) return true;
+            if(Math.abs(maxDepth(root.left)-maxDepth(root.right))>1){
+                return false;
+            }else {
+                return isBalanced(root.left)&&isBalanced(root.right);
+            }
+        }
+
+        public int maxDepth(TreeNode root) {
+            return root == null ? 0 : Math.max(maxDepth(root.left), maxDepth(root.right)) + 1;
+        }
+    }
+```
+
+## 56_I、数组中数字出现的次数
+
+> 思路：分组异或
+
+```java
+	class Solution {
+        //先对所有数字进行一次异或，得到两个出现一次的数字的异或值。
+        //
+        //在异或结果中找到任意为 1 的位。
+        //
+        //根据这一位对所有的数字进行分组。
+        //
+        //在每个组内进行异或操作，得到两个数字。
+        public int[] singleNumbers(int[] nums) {
+            int twoXor = 0;  // 两个只出现一次的数的异或
+            for (int num : nums) {
+                twoXor ^= num;
+            }
+            //找出两个数只出现一次数的分组点
+            int div = 1;
+            while ((div & twoXor) == 0) {
+                div <<= 1;
+            }
+            int[] res = new int[2];
+            for (int num : nums) {
+                if ((num & div) == 0) {
+                    res[0] ^= num;
+                } else {
+                    res[1] ^= num;
+                }
+            }
+
+            return res;
+        }
+    }
+```
+
+## 56_II、数组中数字出现的次数 II
+
+> 思路：统计数组中每个数的每个位出现的次数
+>
+> 然后对统计结果对3取余
+>
+> 然后剩下位上为1的就是
+
+```java
+class Solution {
+        public int singleNumber(int[] nums) {
+            //统计每一位的数字的个数
+            int[] count = new int[32];
+            for (int num : nums) {
+                for (int i = 0; i < 32; i++) {
+                    count[i] += num & 1;
+                    num >>>= 1;
+                }
+            }
+            //然后把count数组对3取余，留下来的位数就是只出现一次的数出现的位置
+            int res =0;
+            for (int i = 0; i < 32; i++) {
+                res <<=1;
+                res |= count[31-i]%3;
+            }
+            return res;
+        }
+    }
+```
+
+## 57_I、和为s的两个数字
+
+> 思路：双指针法
+
+```java
+class Solution {
+        public int[] twoSum(int[] nums, int target) {
+            //双指针法
+            int l = 0, r = nums.length - 1;
+            while(l<r){
+                int sum = nums[l] + nums[r];
+                if(target>sum) l++;
+                else if(target<sum) r--;
+                else return new int[]{nums[l],nums[r]};
+            }
+            return new int[0];
+        }
+    }
+```
+
+## 57_II、和为s的连续正数序列
+
+> 思路：滑动窗口
+
+```java
+class Solution {
+        //滑动窗口
+        public int[][] findContinuousSequence(int target) {
+            int l = 1;
+            int r = 1;
+            int sum = 0;
+            List<int[]> res = new ArrayList<>();
+            while (l <= target / 2) {
+                if (sum < target) sum += r++;
+                else if (sum >target) sum -=l++;
+                else {
+                    int [] arr = new int[r-l];
+                    for (int i = l; i < r; i++) {
+                        arr[i-l] = i;
+                    }
+                    res.add(arr);
+                    sum-=l++;
+
+                }
+            }
+            return res.toArray(new int[res.size()][]);
+        }
+    }
+```
+
+
+
+## 58_I、翻转单词顺序
+
+```java
+class Solution {
+    public String reverseWords(String s) {
+        String[] strs = s.trim().split(" ");
+        StringBuilder sb = new StringBuilder();
+        for (int i = strs.length-1; i >= 0; i--) {
+            if(!"".equals(strs[i])){
+                sb.append(strs[i].trim());
+                if(i>0) sb.append(" ");
+            }
+        }
+        return sb.toString();
+    }
+}
+```
+
+
+
+
+
+## 58_II、左旋转字符串
+
+```java
+class Solution {
+        public String reverseLeftWords(String s, int n) {
+            char[] stc = s.toCharArray();
+            swap(stc, 0, n - 1);
+            swap(stc, n, s.length() - 1);
+            swap(stc, 0, s.length()-1);
+            return String.valueOf(stc);
+        }
+
+        private void swap(char[] stc, int i, int j) {
+            char temp;
+            while (i < j) {
+                temp = stc[i];
+                stc[i++] =stc[j];
+                stc[j--] = temp;
+            }
+        }
+
+    }
+```
+
+
+
+## 59_I、滑动窗口的最大值
+
+```java
+class Solution {
+        // 如何在每次窗口滑动后，将 “获取窗口内最大值” 的时间复杂度从 O(k) 降低至 O(1)
+        public int[] maxSlidingWindow(int[] nums, int k) {
+            if(nums.length==0 || k == 0) return new int[0];
+            Deque<Integer> dq = new LinkedList<>();
+            int [] res = new int[nums.length-k+1];
+            //0-k
+            for (int i = 0; i < k; i++) {
+                while(!dq.isEmpty()&&nums[i]>dq.peekLast()){
+                    dq.removeLast();
+                }
+                dq.addLast(nums[i]);
+            }
+            res[0] = dq.peekFirst();
+            // k-nums.length-1
+            for (int i = k; i < nums.length; i++) {
+                if(nums[i-k] == dq.peekFirst())
+                    dq.removeFirst();
+                while(!dq.isEmpty()&&nums[i]> dq.peekLast()){
+                    dq.removeLast();
+                }
+                dq.addLast(nums[i]);
+                res[i-k+1] = dq.peekFirst();
+            }
+            return res;
+        }
+    }
+```
+
+
+
+## 59_II、队列的最大值
+
+> 思路：双端队列
+
+```java
+	class MaxQueue {
+
+        Queue<Integer> queue;
+        Deque<Integer> maxQueue;
+
+        public MaxQueue() {
+            queue = new LinkedList<>();
+            maxQueue = new LinkedList<>();
+        }
+
+        public int max_value() {
+            return maxQueue.isEmpty()?-1:maxQueue.getFirst();
+        }
+
+        public void push_back(int value) {
+            queue.add(value);
+            while(!maxQueue.isEmpty() && value > maxQueue.getLast()){
+                maxQueue.removeLast();
+            }
+            maxQueue.add(value);
+        }
+
+        public int pop_front() {
+            if(queue.isEmpty()) return -1;
+            int res = queue.poll();
+            if(res == maxQueue.peekFirst()){
+                maxQueue.pollFirst();
+            }
+            return res;
+        }
+    }
+```
+
+
+
+## 60、n个骰子的点数
+
+```java
+	public double[] twoSum(int n) {
+        double [] pre = {1/6d,1/6d,1/6d,1/6d,1/6d,1/6d}; // 初始化一个骰子出现的几率
+        for (int i = 2; i <= n; i++) {
+            double [] temp = new double[i*5+1];   // 每组筛子点数的长度
+            for (int j = 0; j < pre.length; j++) {
+                for (int k = 0; k < 6; k++) {
+                    temp[j+k] += pre[j]*(1/6d); // 更新每增加一个筛子当前点数出现的几率
+                }
+            }
+            pre = temp;
+        }
+        return pre;
+    }
+```
+
+
+
+## 61、扑克牌中的顺子
+
+```java
+	class Solution {
+        public boolean isStraight(int[] nums) {
+            Set<Integer> repeat = new HashSet<>();
+            int max = 0, min = 14;
+            for (int num : nums) {
+                if (num == 0) continue; //大小王跳过
+                max = Math.max(num, max);
+                min = Math.min(num, min);
+                if (repeat.contains(num)) return false;
+                repeat.add(num);
+            }
+            return max - min < 5;
+        }
+    }
+```
+
 
 
 ## 62、约瑟夫环
 
-### 1、数学递推法
+**1、数学递推法**
 
 > 公式
 >
@@ -485,7 +896,8 @@ class MedianFinder {
 **代码**
 
 ```java
-	public int lastRemaining(int n, int m) {
+class Solution {
+    public int lastRemaining(int n, int m) {
         int pos = 0 ; // 最后留在圈的人的索引
         //从两个人开始模拟
         for (int i = 2; i <= n; i++) {
@@ -493,5 +905,114 @@ class MedianFinder {
         }
         return pos;
     }
+}
 ```
 
+
+
+## 63、股票的最大利润
+
+>  动态规划 
+>
+>  转移方程： dp[i] = max(dp[i-1],prices[i]-min(price[0-i]))
+
+```java
+    class Solution {
+        // 转移方程： dp[i] = max(dp[i-1],prices[i]-min(price[0-i]))
+        public int maxProfit(int[] prices) {
+            int res = 0,minPrice = Integer.MAX_VALUE;
+            for (int i = 0; i < prices.length; i++) {
+                minPrice = Math.min(minPrice,prices[i]);
+                res = Math.max(res,prices[i]-minPrice);
+            }
+            return res;
+        }
+    }
+```
+
+## 64、求1+2+…+n
+
+> 递归+逻辑运算符的短路效应
+
+```java
+class Solution {
+    // 思路 ：逻辑运算符的短路效应
+    // if(A && B)  // 若 A 为 false ，则 B 的判断不会执行（即短路），直接判定 A && B 为 false
+    // if(A || B) // 若 A 为 true ，则 B 的判断不会执行（即短路），直接判定 A || B 为 true
+    int res = 0;
+    public int sumNums(int n) {
+        boolean x = n>1 && sumNums(n-1)>0;
+        res +=n;
+        return res;
+    }
+}
+```
+
+## 65、不用加减乘除做加法
+
+> 思路：使用异或运算和与运算来代替+
+
+```java
+class Solution {
+    //思路：利用异或运算和与运算
+    //与运算得出的是两数相加需要进位的数字c
+    //异或得出的是两数相加不需要进位的数字a
+    //然后a+b 再次循环直到需要进位的数字为0结束循环
+    public int add(int a, int b) {
+        while (b != 0) {
+            int c = (a & b) << 1; //进位的数字
+            a ^= b; //未进位的数字
+            b = c; //直到进位的数为0
+        }
+        return a;
+    }
+}
+```
+
+
+
+## 66、构建乘积数组
+
+> 分别计算左右数字  左右数字相乘就可以得到
+
+```java
+class Solution {
+    public int[] constructArr(int[] a) {
+        if (a.length==0) return new int[0];
+        int [] b = new int[a.length];
+        b[0] = 1;
+        int tmp = 1;
+        for (int i = 1; i < a.length; i++) {
+            b[i] = b[i-1]*a[i-1];
+        }
+        for (int i = a.length-2; i >= 0; i--) {
+            tmp *= a[i+1];
+            b[i] *=tmp;
+        }
+        return b;
+    }
+}
+```
+
+## 67、把字符串转换成整数
+
+> 思路，注意正负号和越界问题
+
+```java
+class Solution {
+    public int strToInt(String str) {
+        char[] c = str.trim().toCharArray();
+        if(c.length==0) return 0;
+        int res = 0,sign = 1;
+        int i = 1,rp = Integer.MAX_VALUE/10;
+        if(c[0] == '-') sign =-1;
+        else if(c[0]!='+') i=0;
+        for (int j = i; j < c.length; j++) {
+            if(c[j]<'0' || c[j] >'9') break;
+            if(res > rp || (res == rp&&c[j]>'7')) return sign ==1 ? Integer.MAX_VALUE :Integer.MIN_VALUE;
+            res = res *10 +(c[j] - '0');
+        }
+        return res*sign;
+    }
+}
+```
