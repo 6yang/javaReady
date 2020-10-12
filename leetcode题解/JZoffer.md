@@ -2,9 +2,375 @@
 
 
 
+## 3、数组中重复的数字
+
+```java
+class Solution {
+    public int findRepeatNumber(int[] nums) {
+         if(nums == null || nums.length<0)
+            return -1;
+        for (int i = 0; i < nums.length; i++) {
+            if(nums[i] != i){
+                if(nums[nums[i]] == nums[i])
+                    return nums[i];
+                swap(nums,i,nums[i]);
+            }
+        }
+        return -1;
+    }
+    private static void swap(int[] nums, int i, int j) {
+        int t = nums[i];
+        nums[i] = nums[j];
+        nums[j] = t;
+
+    }
+}
+```
 
 
 
+## 4、二维数组中的查找
+
+```java
+class Solution {
+    public boolean findNumberIn2DArray(int[][] matrix, int target) {
+        if(matrix== null || matrix.length==0){
+            return false;
+        }
+        int rows = matrix[0].length-1;
+        int cols = matrix.length-1;
+        int toDown = 0;
+        int toLeft = rows;
+        while(toDown <= cols && toLeft >=0){
+            if(target == matrix[toDown][toLeft]){
+                return true;
+            }else if (target < matrix[toDown][toLeft]){
+                toLeft-- ;
+            }else if(target > matrix[toDown][toLeft]){
+                toDown++;
+            }
+        }
+        return false;
+    }
+}
+```
+
+
+
+## 5、替换空格
+
+```java
+ class Solution {
+    public String replaceSpace(String s) {
+        int len = s.length();
+        char [] cs = new char[len*3];
+        char[] c = s.toCharArray();
+        int size = 0;
+        for (int i = 0; i < len; i++) {
+            if(c[i]==' '){
+                cs[size++] = '%';
+                cs[size++] = '2';
+                cs[size++] = '0';
+            }else{
+                cs[size++] = c[i];
+                
+            }
+        }
+        return new String(cs,0,size);
+    }
+}
+```
+
+## 6、从尾到头打印链表
+
+```java
+public int[] reversePrint(ListNode head) {
+        int length = 0;
+        ListNode next = head;
+        while(next!=null){
+            length++;
+            next = next.next;
+        }
+        int [] print = new int[length];
+        next = head;
+        for (int i = length - 1; i >= 0; i--) {
+            print[i] = next.val;
+            next = next.next;
+        }
+        return print;
+    }
+```
+
+
+
+## 7、重建二叉树
+
+```java
+class Solution {
+    HashMap<Integer, Integer> map = new HashMap<>();
+    public TreeNode buildTree(int[] preorder, int[] inorder) {
+        for (int i = 0; i < inorder.length; i++) {
+            map.put(inorder[i],i);
+        }
+        return build(preorder,0,preorder.length-1,inorder,0,inorder.length-1);
+    }
+    public TreeNode build(int [] preOrder,int preL,int preR,int [] inOrder,int inL,int inR){
+        if(preL>preR||inL>inR) return null;
+        TreeNode root = new TreeNode(preOrder[preL]);
+        int inCenter = map.get(preOrder[preL]);
+        int inLeftSize = inCenter - inL;
+        root.left = build(preOrder,preL+1,preL+inLeftSize,inOrder,inL,inCenter-1);
+        root.right = build(preOrder,preL+inLeftSize+1,preR,inOrder,inCenter+1,inR);
+        return root;
+    }
+}
+```
+
+
+
+## 9、用两个栈实现队列
+
+```java
+class CQueue {
+    Stack<Integer> in;
+    Stack<Integer> out;
+    public CQueue() {
+        in = new Stack<>();
+        out = new Stack<>();
+    }
+
+    public void appendTail(int value) {
+        in.push(value);
+    }
+
+    public int deleteHead() {
+        if(out.empty()){
+            if (in.empty()){
+                return -1;
+            }else{
+                while (!in.empty()){
+                    out.push(in.pop());
+                }
+                return out.pop();
+            }
+        }else{
+            return out.pop();
+        }
+    }
+}
+```
+
+## 10_I、斐波那契数列
+
+```java
+class Solution {
+    public int fib(int n) {
+        if (n <= 1) return n;
+        int[] dp = new int[2];
+        int temp ;
+        dp[0] = 0;
+        dp[1] = 1;
+        for (int i = 2; i <= n; i++) {
+            temp = (dp[0]+dp[1])%1000000007;
+            dp[0] = dp[1];
+            dp[1] = temp;
+        }
+        return dp[1];
+    }
+}
+```
+
+
+
+## 10_II、青蛙跳台阶问题
+
+```java
+class Solution {
+   public int numWays(int n) {
+        if (n <= 1) return 1;
+        int[] dp = new int[2];
+        dp[0] = 1;
+        dp[1] = 1;
+        int temp;
+        for (int i = 2; i <= n; i++) {
+            temp = (dp[0]+dp[1])%1000000007;
+            dp[0] = dp[1];
+            dp[1] = temp;
+        }
+        return dp[1];
+    }
+}
+```
+
+
+
+## 11、旋转数组的最小数字
+
+```java
+class Solution {
+   public int minArray(int[] numbers) {
+        int i = 0;
+        int j = numbers.length - 1;
+        while (i < j) {
+            int mid = (i + j) / 2;
+            if (numbers[j] > numbers[mid]) {
+                j = mid;
+            } else if (numbers[j] < numbers[mid]) {
+                i = mid+1;
+            }else{
+                j--;
+            }
+        }
+        return numbers[j];
+    }
+}
+```
+
+## 12、矩阵中的路径
+
+```java
+class Solution {
+    public boolean exist(char[][] board, String word) {
+        char[] words = word.toCharArray();
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board[0].length; j++) {
+                if (dfs(board, words, i, j, 0)) return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean dfs(char[][] board, char[] words, int i, int j, int k) {
+        if (i < 0 || i >= board.length || j < 0 || j >= board[0].length || board[i][j] != words[k]) return false;
+        if (k == words.length - 1) return true;
+        char temp = board[i][j];
+        board[i][j] = '*';
+        boolean res = dfs(board, words, i + 1, j, k + 1) ||
+                dfs(board, words, i - 1, j, k + 1) ||
+                dfs(board, words, i, j + 1, k + 1) ||
+                dfs(board, words, i, j - 1, k + 1);
+        board[i][j] = temp;
+        return res;
+    }
+}
+```
+
+
+
+## 19、正则表达式匹配
+
+```java
+public boolean isMatch(String s, String p) {
+        int a = s.length();
+        int b = p.length();
+        boolean [][] dp = new boolean[a+1][b+1];
+        for (int i = 0; i <= a; i++) {
+            for (int j = 0; j <= b; j++) {
+                // 1这里if主要做了两个判断
+                // 空串和空正则匹配
+                // 非空串和空正则一定不匹配
+                // 2在else中
+                // 空串和非空正则不一定
+                // 非空串和非空正则也不一定
+                if(j==0){
+                    dp[i][j] = i==0;
+                }else {
+                    // 在非空正则中分为 * 和 非*两种情况
+                    if(p.charAt(j-1)!='*'){
+                        // 碰到非*
+                        if(i>0&&(s.charAt(i-1)==p.charAt(j-1)||p.charAt(j-1)=='.')){
+                            dp[i][j] = dp[i-1][j-1];
+                        }
+                    }else {
+                        // 如果 p 的最后一个字符是*它代表 p[m-2]=c 可以重复0次或多次，它们是一个整体 c*
+                        // 情况一：s[n-1] 是 0 个 c，p 最后两个字符废了，能否匹配取决于 s{0..n-1}和 p{0..m-3}是否匹配
+                        // 情况二：s[n-1]是多个 c 中的最后一个（这种情况必须 s[n-1]=c或者 c='.'，所以s匹配完往前挪一个，
+                        // p继续匹配，因为可以匹配多个，继续看 s{0..n-2}和 p{0..m-1} 是否匹配。
+                        // 碰到*了，分为看和不看两种情况
+                        // 不看
+                        if(j>=2){
+                            dp[i][j] |= dp[i][j-2];
+                        }
+                        // 看
+                        if(i>=1&&j>=2 && (s.charAt(i-1)==p.charAt(j-2)||p.charAt(j-2)=='.')){
+                            dp[i][j] |= dp[i-1][j];
+                        }
+                    }
+                }
+            }
+        }
+        return dp[a][b];
+    }
+```
+
+
+
+## 20、表示数值的字符串
+
+```java
+class Solution {
+    private int index = 0;
+    public boolean isNumber(String s) {
+        if(s==null || s.length() == 0) return false;
+        //添加结束标志
+        s += '|';
+        while(s.charAt(index)==' ') index++;
+        boolean isNumeric = scanInteger(s);
+        //如果出现’.‘ 接下来就是小数部分
+        if(s.charAt(index)=='.'){
+            index++;
+            // 下面一行代码用||的原因：
+            // 1. 小数可以没有整数部分，例如.123等于0.123；
+            // 2. 小数点后面可以没有数字，例如233.等于233.0；
+            // 3. 当然小数点前面和后面可以有数字，例如233.666
+            isNumeric = scanUnsignInteger(s)||isNumeric;
+        }
+        // 如果出现'e'或者'E'，接下来跟着的是数字的指数部分
+        if(s.charAt(index)=='e'||s.charAt(index)=='E'){
+            index++;
+            // 下面一行代码用&&的原因：
+            // 1. 当e或E前面没有数字时，整个字符串不能表示数字，例如.e1、e1；
+            // 2. 当e或E后面没有整数时，整个字符串不能表示数字，例如12e、12e+5.4
+            isNumeric = isNumeric && scanInteger(s);
+        }
+        while(s.charAt(index)==' '){
+            index++;
+        }
+        return isNumeric && s.charAt(index)=='|';
+    }
+
+    private boolean scanInteger(String s) {
+        if(s.charAt(index)=='-' || s.charAt(index)=='+'){
+            index++;
+        }
+        return scanUnsignInteger(s);
+    }
+
+    private boolean scanUnsignInteger(String s) {
+        int befor = index;
+        while(s.charAt(index)>='0'&&s.charAt(index)<='9'){
+            index++;
+        }
+        return index>befor;
+    }
+}
+```
+
+## 39、数组中出现次数超过一半的数字
+
+```java
+	class Solution {
+        public int majorityElement(int[] nums) {
+            // 摩尔投票法
+            int votes = 0, maj=0;
+            for (int i = 0; i < nums.length; i++) {
+                if (votes == 0) maj = nums[i];
+                votes += maj == nums[i] ? 1 : -1; // 相等就+1 不相等就-1
+            }
+            return 0;
+        }
+    }
+```
 
 
 
@@ -1016,3 +1382,69 @@ class Solution {
     }
 }
 ```
+
+
+
+## 68_I、二叉搜索树的最近公共祖先
+
+> 最近公共祖先一定是大于左边p 小于右边q 的节点
+
+**1、递归**
+
+```java
+	public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+        if(root == null) return null;
+        if(root.val>p.val && root.val>q.val)
+            return lowestCommonAncestor(root.left,p,q);
+        if(root.val<p.val && root.val<q.val)
+            return lowestCommonAncestor(root.right,p,q);
+        return root;
+    }
+```
+
+**2、迭代**
+
+```java
+   public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+        if(root == null) return null;
+        TreeNode cur = root;
+        while(cur!=null){
+            if(cur.val > p.val && cur.val > q.val)
+                cur = cur.left;
+            else if(cur.val < q.val && cur.val < p.val)
+                cur = cur.right;
+            else
+                break;
+        }
+        return cur;
+    }
+```
+
+
+
+## 68_II、二叉树的最近公共祖先
+
+**【思路】**
+因为lowestCommonAncestor(root, p, q)的功能是找出以root为根节点的两个节点p和q的最近公共祖先，所以递归体分三种情况讨论：
+
+如果p和q分别是root的左右节点，那么root就是我们要找的最近公共祖先
+如果p和q都是root的左节点，那么返回lowestCommonAncestor(root.left,p,q)
+如果p和q都是root的右节点，那么返回lowestCommonAncestor(root.right,p,q)
+**边界条件讨论：**
+
+如果root是null，则说明我们已经找到最底了，返回null表示没找到
+如果root与p相等或者与q相等，则返回root
+如果左子树没找到，递归函数返回null，证明p和q同在root的右侧，那么最终的公共祖先就是右子树找到的结点
+如果右子树没找到，递归函数返回null，证明p和q同在root的左侧，那么最终的公共祖先就是左子树找到的结点
+
+```java
+	public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+        if(root == null || root == p || root == q) return root;
+        TreeNode left = lowestCommonAncestor(root.left, p, q);
+        TreeNode right = lowestCommonAncestor(root.right, p, q);
+        if (left==null) return right;
+        if (right==null) return left;
+        return root;
+    }
+```
+
