@@ -86,9 +86,9 @@ string是redis最基本的类型，你可以理解成与Memcached一模一样的
 
 string类型是二进制安全的。意思是redis的string可以包含任何数据。比如jpg图片或者序列化的对象 。
 
-![](\img\redis\string_1.bmp)
+<img src="\img\redis\string_1.bmp" style="zoom:80%;" />
 
-![](\img\redis\string_2.bmp)
+<img src="\img\redis\string_2.bmp" style="zoom:80%;" />
 
 ### list
 
@@ -98,6 +98,32 @@ string类型是二进制安全的。意思是redis的string可以包含任何数
 如果值全移除，对应的键也就消失了。
 链表的操作无论是头和尾效率都极高，但假如是对中间元素进行操作，效率就很惨淡了。
 
-![](\img\redis\list_1.bmp)
+<img src="\img\redis\list_1.bmp" style="zoom:80%;" />
 
-![](\img\redis\list_2.bmp)
+<img src="\img\redis\list_2.bmp" style="zoom:80%;" />
+
+### set
+
+<font color='red'>不可以插入重复元素</font>
+
+<img src="C:\Users\jairliu\Desktop\own\img\redis\set_1.bmp"  />
+
+### hash
+
+<font color='red'>类似于java的hash</font>
+
+<font color='cornflowerblue'>KV模式不变，但V是一个键值对</font>
+
+![](C:\Users\jairliu\Desktop\own\img\redis\hash.bmp)
+
+### zset
+
+**<font color='red'>有序集合</font>**
+
+在set基础上，加一个score值。
+之前set是k1 v1 v2 v3，
+<font color='cornflowerblue'>现在zset是k1 score1 v1 score2 v2</font>
+
+![](C:\Users\jairliu\Desktop\own\img\redis\zset_1.bmp)
+
+![](C:\Users\jairliu\Desktop\own\img\redis\zset_2.bmp)
