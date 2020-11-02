@@ -1,475 +1,50 @@
-# 一 、jvm体系结构
+# 一 、jvm
 
 
 
-**jvm是运行在操作系统之上的，他与硬件没有直接的交互**
+<font color='cornflowerblue'>JVM 是可运行 Java 代码的假想计算机 ，包括一套字节码指令集、一组寄存器、一个栈、一个垃圾回收，堆 和 一个存储方法域。JVM 是运行在操作系统之上的，它与硬件没有直接的交互。</font>
 
+## 1.1 jvm内存区域
 
+![](img/jvm/jvm_memory_02.jpg)
 
-![](img\jvm\jvm_01.jpg)
+### 1.1.1  程序计数器（线程私有）
 
-## 1.1 类装载器ClassLoader
+一块较小的内存空间,<font color='red'> 是当前线程所执行的字节码的行号指示器</font>，每条线程都要有一个独立的程序计数器，这类内存也称为“线程私有”的内存。
 
- 	
+<font color='cornflowerblue'>正在执行 java 方法的话，计数器记录的是虚拟机字节码指令的地址（当前指令的地址）。如果还是 Native 方法，则为空。</font>
 
-​	负责加载class文件，class文件在**文件开头有特定的文件标示**，将class文件字节码内容加载到内存中，并将这些内容转换成方法区中的运行时数据结构,并且ClassLoader只负责class文件的加载，至于它是否可以运行，则由Execution Engine决定 
+这个内存区域是唯一一个在虚拟机中没有规定任何 OutOfMemoryError 情况的区域。
 
+### 1.1.2  虚拟机栈（线程私有）
 
+<font color='red'>是描述 java 方法执行的内存模型，每个方法在执行的同时都会创建一个栈帧（Stack Frame）用于存储局部变量表、操作数栈、动态链接、方法出口等信息</font>。<font color='cornflowerblue'> 每一个方法从调用直至执行完成的过程，就对应着一个栈帧在虚拟机栈中入栈到出栈的过程。 </font> 
 
-![](img\jvm\classloader_01.png)
+栈帧（ Frame）是用来存储数据和部分过程结果的数据结构，同时也被用来处理动态链接(Dynamic Linking)、 方法返回值和异常分派（ Dispatch Exception）。栈帧随着方法调用而创建，随着方法结束而销毁——无论方法是正常完成还是异常完成（抛出了在方法内未被捕获的异常）都算作方法结束。
 
-### 
+![](img/jvm/jvm_stack.jpg)
 
-### 1.1.1 jvm 类加载器3+1
+### 1.1.3  本地方法栈（线程私有）
 
+本地方法区和<font color='cornflowerblue'> Java Stack 作用类似</font>, 区别是虚拟机栈为执行 Java 方法服务, <font color='cornflowerblue'>而本地方法栈则为Native 方法服务,</font> 如果一个 VM 实现使用 C-linkage 模型来支持 Native 调用, 那么该栈将会是一个C 栈，但 HotSpot VM 直接就把本地方法栈和虚拟机栈合二为一。
 
+### 1.1.4  堆（线程公有）
 
-![](img\jvm\classloader_02.png)
+是被线程共享的一块内存区域，<font color='red'> 创建的对象和数组都保存在 Java 堆内存中，也是垃圾收集器进行垃圾收集的最重要的内存区域 </font>。由于现代 VM 采用**分代收集算法**, 因此 Java 堆从 GC 的角度还可以细分为: **新生代**(Eden区、FromSu881qui,zrvivor区和 ToSurvivor区)和**老年代。**
 
 
 
-#### 1.1.1.1   **Bootstrap ClassLoader/启动类加载器** 
+### 1.1.5  方法区（线程公有）
 
+即我们常说的**永久代**(Permanent **Generation)**, 用于存储**被** **JVM** **加载的类信息**、**常量**、**静态变量**、**即时编译器编译后的代码**等数据. HotSpot VM 把 GC 分代收集扩展至方法区, 即**使用** **Java**堆的永久代来实现方法区, 这样 HotSpot 的垃圾收集器就可以像管理 Java 堆一样管理这部分内存,而不必为方法区开发专门的内存管理器(永久带的内存回收的主要目标是针对**常量池的回收**和**类型的卸载**, 因此收益一般很小)。
 
+<font color='red'>运行时常量池</font>（Runtime Constant Pool）是方法区的一部分。Class 文件中除了有类的版本、字段、方法、接口等描述等信息外，还有一项信息是常量池（Constant Pool Table），用于存放编译期生成的各种字面量和符号引用，这部分内容将在类加载后存放到方法区的运行时常量池中。 Java 虚拟机对 Class 文件的每一部分（自然也包括常量池）的格式都有严格的规定，每一个字节用于存储哪种数据都必须符合规范上的要求，这样才会被虚拟机认可、装载和执行。
 
-**启动（Bootstrap）类加载器**：引导类装入器是用**本地代码**实现的类装入器，它负责将 /lib 下面的类库加载到内存中。由于引导类加载器涉及到虚拟机本地实现细节，开发者无法直接获取到启动类加载器的引用，所以不允许直接通过引用进行操作。
+### 1.1.6 堆参数调优
 
- 主要负责`jre/lib/rt.jar`导入
 
 
-
-#### 1.1.1.2   **Extension ClassLoader/扩展类加载器** 
-
-
-
-ExtClassLoader（sun.misc.Launcher$ExtClassLoader） 实现的。它负责将
-
-< Java_Runtime_Home >/lib/ext 或者由系统变量 java.ext.dir 指定位置中的类库加载到内存中。开发者可以直接使用标准扩展类加载器。
-
- 主要负责`jre/lib/ext/*.jar`文件的加载
-
-
-
-#### 1.1.1.3   Application ClassLoader/系统类加载器**
-
-
-
-AppClassLoader（sun.misc.Launcher$AppClassLoader）实现的。它负责将系统类路径（CLASSPATH）中指定
-
-的类库加载到内存中。开发者可以直接使用系统类加载器。
-
- 主要负责java -classpath/-Djava.class.path所指的目录下的类与jar包装入工作. 
-
-#### 1.1.1.4  User Custom ClassLoader/用户自定义类加载器
-
-
-
- 在程序运行期间, 通过java.lang.ClassLoader的子类动态加载class文件, 体现java动态实时类装入特性. 
-
-
-
-### 1.1.2 代码
-
-
-
-```java
-package com.yang.sh.jvm;
-
-public class MyObject {
-    public static void main(String[] args) {
-        Object object = new Object();
-        //System.out.println(object.getClass().getClassLoader().getParent().getParent());
-        //Exception in thread "main" java.lang.NullPointerException
-        //System.out.println(object.getClass().getClassLoader().getParent());
-        //Exception in thread "main" java.lang.NullPointerException
-        System.out.println(object.getClass().getClassLoader());
-        //null
-
-        MyObject myObject = new MyObject();
-        System.out.println(myObject.getClass().getClassLoader().getParent().getParent());
-        //null
-        System.out.println(myObject.getClass().getClassLoader().getParent());
-        //sun.misc.Launcher$ExtClassLoader@14ae5a5
-        System.out.println(myObject.getClass().getClassLoader());
-        //sun.misc.Launcher$AppClassLoader@18b4aac2
-        
-    }
-}
-
-```
-
-
-
-### 1.1.3 双亲委派机制
-
-> 一句话
->
-> 避免内存中出现多个同样的字节码
->
-> 保证了使用不同的类加载器加载类名相同的 对象的时候最终得到的都是同样一个 对象。 
-
-当一个类加载器收到了类加载请求，他首先不会尝试自己去加载这个类，而是把这个请求委派给父类去完成，每一个层次类加载器都是如此，因此所有的加载请求都应该传送到启动类加载其中，只有当父类加载器反馈自己无法完成这个请求的时候（在它的加载路径下没有找到所需加载的Class），子类加载器才会尝试自己去加载。 
-
-
-
- 这种层级关可以避免类的重复加载 
-
-采用双亲委派的一个好处是比如加载位于 rt.jar 包中的类 java.lang.Object，不管是哪个加载器加载这个类，最终都是委托给顶层的启动类加载器进行加载，这样就保证了使用不同的类加载器最终得到的都是同样一个 Object对象。 
-
-![](img\jvm\classloader_03.png)
-
-
-
-```java
-package com.yang.sh.jvm;
-
-public class classloader_01 {
-    public static void main(String[] args) {
-        System.out.println(ClassLoader.getSystemClassLoader());
-        System.out.println(ClassLoader.getSystemClassLoader().getParent());
-        System.out.println(ClassLoader.getSystemClassLoader().getParent().getParent());
-        //sun.misc.Launcher$AppClassLoader@18b4aac2
-        //sun.misc.Launcher$ExtClassLoader@14ae5a5
-        //null
-        
-        //通过以上的代码输出，我们可以判定系统类加载器的父加载器是标准扩展类加载器，但是我们试图获取标准扩展类加载器的父类加载器时确得到了null，就是说标准扩展类加载器本身强制设定父类加载器为null
-    }
-}
-
-```
-
-
-
-```java
-package java.lang;
-
-import com.sun.org.apache.bcel.internal.generic.NEW;
-
-public class String {
-    public static void main(String[] args) {
-        System.out.println("自定义java.lang.String");
-        //错误: 在类 java.lang.String 中找不到 main 方法, 请将 main 方法定义为:
-        //   public static void main(String[] args)
-        //否则 JavaFX 应用程序类必须扩展javafx.application.Application
-
-    }
-
-}
-
-```
-
-
-
-### 1.1.3 沙箱安全机制
-
-Java安全模型的核心就是Java沙箱（sandbox）
-
-什么是沙箱？沙箱是一个限制程序运行的环境。沙箱机制就是将 Java 代码限定在虚拟机(JVM)特定的运行范围中，并且严格限制代码对本地系统资源访问，通过这样的措施来**保证对代码的有效隔离，防止对本地系统造成破坏**。沙箱**主要限制系统资源访问**，那系统资源包括什么？——`CPU、内存、文件系统、网络`。不同级别的沙箱对这些资源访问的限制也可以不一样。
-
-所有的Java程序运行都可以指定沙箱，可以定制安全策略。
-
-
-
- 在Java中将执行程序分成本地代码和远程代码两种，本地代码默认视为可信任的，而远程代码则被看作是不受信的。对于授信的本地代码，可以访问一切本地资源。而对于非授信的远程代码在早期的Java实现中，安全依赖于沙箱 (Sandbox) 机制。如下图所示 JDK1.0安全模型 
-
-![](img\jvm\classloader_04.png)
-
- 但如此严格的安全机制也给程序的功能扩展带来障碍，比如当用户希望远程代码访问本地系统的文件时候，就无法实现。因此在后续的 Java1.1 版本中，针对安全机制做了改进，增加了`安全策略`，允许用户指定代码对本地资源的访问权限。如下图所示 JDK1.1安全模型 
-
-![](img\jvm\classloader_05.png)
-
-  Java1.2 版本中，再次改进了安全机制，增加了`代码签名`。不论本地代码或是远程代码，都会按照用户的安全策略设定，由类加载器加载到虚拟机中权限不同的运行空间，来实现差异化的代码执行权限控制。如下图所示 JDK1.2安全模型 
-
-![](img\jvm\classloader_06.png)
-
- 当前最新的安全机制实现，则引入了域 (Domain) 的概念。虚拟机会把所有代码加载到不同的系统域和应用域，系统域部分专门负责与关键资源进行交互，而各个应用域部分则通过系统域的部分代理来对各种需要的资源进行访问。虚拟机中不同的受保护域 (Protected Domain)，对应不一样的权限 (Permission)。存在于不同域中的类文件就具有了当前域的全部权限，如下图所示 最新的安全模型(jdk 1.6)
-
-![](img\jvm\classloader_07.png)
-
-## 1.2  native
-
-
-
-**native** 是一个关键字
-
-
-
-![](img\jvm\native_01.png)
-
-
-
-有声明但是没有实现
-
-因为它调用的是本地方法库
-
-### 1.2.1 Native Interface 本地接口
-
-​	本地接口的作用是融合不同的编程语言为 Java 所用，它的初衷是融合 C/C++程序，Java 诞生的时候是 C/C++横行的时候，要想立足，必须有调用 C/C++程序，于是就在内存中专门开辟了一块区域处理标记为native的代码，它的具体做法是 Native Method Stack中登记 native方法，在Execution Engine 执行时加载native libraies。
-
- 目前该方法使用的越来越少了，除非是与硬件有关的应用，比如通过Java程序驱动打印机或者Java系统管理生产设备，在企业级应用中已经比较少见。因为现在的异构领域间的通信很发达，比如可以使用 Socket通信，也可以使用Web Service等等
-
-
-
-### 1.2.2 Native Method Stack
-
-它的具体做法是Native Method Stack中登记native方法，在Execution Engine 执行时加载本地方法库。
-
-
-
-## 1.3 pc寄存器
-
-> - 若正在执行的是java方法，则计数器记录的是正在执行的字节码指令的地址
-> - 若正在执行的是native方法，则计数器为空
-> - 该区域是唯一一个不会导致outofmemoryError的区域
-
-每个线程都有一个程序计数器，是线程私有的,就是一个指针，指向方法区中的方法字节码（用来存储指向下一条指令的地址,也即将要执行的指令代码），由执行引擎读取下一条指令，是一个非常小的内存空间，几乎可以忽略不记。
-
-这块内存区域很小，它是当前线程所执行的字节码的行号指示器，字节码解释器通过改变这个计数器的值来选取下一条需要执行的字节码指令。
-
-**如果执行的是一个Native方法，那这个计数器是空的。**
-
-用以完成分支、循环、跳转、异常处理、线程恢复等基础功能。不会发生内存溢出(OutOfMemory=OOM)错误
-
-
-
-## 1.4 Method Area 方法区
-
-> - 用来存放虚拟机加载的类信息，常量，静态变量，即时编译器编译后的代码等信息
-> - GC会回收该区域的常量池和进行类型的卸载 *运行时常量池
-> - ♣ Class文件的常量池用于存放编译期生成的各种字面量和符号引用，这部分内容将在类加载后存放在运行时常量池中
-> - ♣ 还把翻译出来的直接引用也放在运行时常量池中，运行时产生的常量也放在里面
-
-供**各线程共享**的运行时内存区域。它<u>存储了每一个**类的结构信息**</u>，例如**运行时常量池**（Runtime Constant Pool）、**字段和方法数据**、**构造函数和普通方法的字节码内容**。**上面讲的是规范，在不同虚拟机里头实现是不一样的，最典型的就是永久代(PermGen space)和元空间(Metaspace)。**
-
-类似
-
-空调 k1 = new 格力（）
-
-方法区 f = new   永久代（）
-
-方法区 f = new 元空间（）
-
-
-
-**But**
-
-**实例变量存在堆内存中,和方法区无关**
-
->  元空间使用本地内存，而永久代使用的是jvm内存
-
-
-
-## 1.5  stack 栈
-
-> 总结
->
-> - 描述的是Java方法执行的内存模型：每个方法都会创建一个栈帧用于存储局部变量表，操作数栈、动态链接，方法出口等信息 
->
-> - 局部变量表存放了编译期可知的基本数据类型，对象引用，和returnAddress类型（指向一条字节码指令地址），局部变量表的内存空间在编译器确定，在运行期不变 
-> - 可导致两种异常：线程请求的栈深度大于虚拟机允许的深度-StackOverflowError；虚拟机无法申请到足够的内存-OutOfMemoryError
-
-栈管运行，堆管存储**
-
-​     栈也叫栈内存，主管Java程序的运行，是在线程创建时创建，它的生命期是跟随线程的生命期，线程结束栈内存也就释放，**对于栈来说不存在垃圾回收问题**，只要线程一结束该栈就Over，生命周期和线程一致，是线程私有的。
-
-**8种基本类型的变量+对象的引用变量+实例方法都是在函数的栈内存中分配**  
-
-
-
-### **1.5.1** 栈存储什么?
-
-
-
-栈帧（java 方法）中主要保存3 类数据：
-
-
-
-- 本地变量（Local Variables）:输入参数和输出参数以及方法内的变量；
-
-
-
-- 栈操作（Operand Stack）:记录出栈、入栈的操作；
-
-
-
-- 栈帧数据（Frame Data）:包括类文件、方法等等。
-
-### 1.5.2 栈运行原理
-
-
-
-栈中的数据都是以栈帧（Stack Frame）的格式存在，栈帧是一个内存区块，是一个数据集，是一个有关方法(Method)和运行期数据的数据集，当一个方法A被调用时就产生了一个栈帧 F1，并被压入到栈中，
-
-A方法又调用了 B方法，于是产生栈帧 F2 也被压入栈，
-
-B方法又调用了 C方法，于是产生栈帧 F3 也被压入栈，
-
-……
-
-执行完毕后，先弹出F3栈帧，再弹出F2栈帧，再弹出F1栈帧……
-
-
-
-遵循“先进后出”/“后进先出”原则。
-
-
-
-**每个方法执行的同时都会创建一个栈帧，用于存储局部变量表、操作数栈、动态链接、方法出口等信息**，每一个方法从调用直至执行完毕的过程，就对应着一个栈帧在虚拟机中入栈到出栈的过程。**栈的大小和具体JVM的实现有关，通常在256K~756K之间,约等于1Mb左右。**
-
-
-
-![](\img\jvm\stack_01.png)
-
-图示在一个栈中有两个栈帧：
-
-栈帧 2是最先被调用的方法，先入栈，
-
-然后方法 2 又调用了方法1，栈帧 1处于栈顶的位置，
-
-栈帧 2 处于栈底，执行完毕后，依次弹出栈帧 1和栈帧 2，
-
-线程结束，栈释放
-
-
-
-每执行一个方法都会产生一个栈帧，保存到栈(后进先出)的**顶部，顶部栈就是当前的方法，该方法执行完毕 后会自动将此栈帧出栈。**
-
-
-
-### 1.5.3 常见错误 StackOverflowError
-
-**Exception in thread "main" java.lang.StackOverflowError**
-
-
-
-```java
-package com.yang.sh.jvm;
-
-
-
-public class stack_01 {
-
-    //Exception in thread "main" java.lang.StackOverflowError 
-    public static  void m1(){
-        System.out.println("1");
-        m1();
-
-    }
-
-    public static void main(String[] args) {
-        System.out.println("main");
-        m1();
-    }
-}
-
-```
-
-
-
-### 1.5.4 栈+堆+方法区的交互关系
-
-![](\img\jvm\stack_02.png)
-
-
-
-HotSpot是使用指针的方式来访问对象：
-
-Java堆中会存放访问**类元数据**的地址，
-
-reference存储的就直接是对象的地址
-
-
-
-## 1.6 堆heap
-
-> - java堆是被所有线程共享的内存区域，在虚拟机启动时创建，用来分配对象实例和数组
-> - 堆是垃圾回收器主要管理的区域，堆可分为新生代和老年代
-> - 从内存分配角度看，堆可划分出多个线程私有的分配缓冲区（TLAB）
-> - 大小可通过 -Xmx 和 -Xms 控制
-
-一个JVM实例只存在一个堆内存，堆内存的大小是可以调节的。类加载器读取了类文件后，需要把类、方法、常变量放到堆内存中，保存所有引用类型的真实信息，以方便执行器执行，堆内存分为三部分  
-
-
-
-- **Young Generation Space 新生区          Young/New**
-- **Tenure generation space 养老区           Old/ Tenure**
-- **lPermanent Space       永久区             Perm**
-
-
-
-### 1.6.1 java7 之前
-
-![](img\jvm\heap_01.png)
-
-**java 8 之后 永生区变为了元数据区**
-
-​	新生区是类的诞生、成长、消亡的区域，一个类在这里产生，应用，最后被垃圾回收器收集，结束生命。新生区又分为两部分： 伊甸区（Eden space）和幸存者区（Survivor pace） ，所有的类都是在伊甸区被new出来的。幸存区有两个： 0区（Survivor 0 space）和1区（Survivor 1 space）。当伊甸园的空间用完时，程序又需要创建对象，JVM的垃圾回收器将对伊甸园区进行垃圾回收(Minor GC)，将伊甸园区中的**不再被其他对象所引用的对象**进行销毁。然后**将伊甸园中的剩余对象移动到幸存 0区**。**若幸存 0区也满了，再对该区进行垃圾回收，然后移动到 1 区。那如果1 区也满了呢？再移动到养老区**。**若养老区也满了，那么这个时候将产生MajorGC（FullGC）**，**进行养老区的内存清理。若养老区执行了Full GC之后发现依然无法进行对象的保存，就会产生OOM异常“OutOfMemoryError”。**
-
-
-
-**如果出现java.lang.OutOfMemoryError: Java heap space异常，**说明**Java虚拟机的堆内存不够**。原因有二：
-
-（1）**Java虚拟机的堆内存设置不够**，可以通过参数-Xms、-Xmx来调整。
-
-（2）代码中**创建了大量大对象，并且长时间不能被垃圾收集器收集（存在被引用）**。
-
-
-
-### 1.6.2 MinorGC 的过程
-
-
-
-**复制->清空->互换**
-
-
-
-![](img\jvm\heap_02.png)
-
-
-
-**1：eden、SurvivorFrom 复制到 SurvivorTo，年龄+**1 
-
-首先，当Eden区满的时候会触发第一次GC,把还活着的对象拷贝到SurvivorFrom区，当Eden区再次触发GC的时候会扫描Eden区和From区域,对这两个区域进行垃圾回收，经过这次回收后还存活的对象,则直接复制到To区域（如果有对象的年龄已经达到了老年的标准，则赋值到老年代区），同时把这些对象的年龄+1
-
-
-
-**2：清空 eden、SurvivorFrom** 
-
-然后，清空Eden和SurvivorFrom中的对象，也即复制之后有交换，谁空谁是to
-
-
-
-**3：SurvivorTo和 SurvivorFrom 互换** 
-
-最后，SurvivorTo和SurvivorFrom互换，原SurvivorTo成为下一次GC时的SurvivorFrom区。部分对象会在From和To区域中复制来复制去,如此交换15次(由JVM参数MaxTenuringThreshold决定,这个参数默认是15),最终如果还是存活,就存入到老年代
-
-### 1.6.3 HotSpot内存管理
-
-![](img\jvm\heap_03.png)
-
-
-
-​	实际而言，**方法区**（Method Area）和堆一样，是各个线程共享的内存区域，它**用于存储虚拟机加载的：类信息+普通常量+静态常量+编译器编译后的代码**等等，**虽然JVM规范将方法区描述为堆的一个逻辑部分，但它却还有一个别名叫做Non-Heap(非堆)，目的就是要和堆分开。**
-
- 
-
- 对于HotSpot虚拟机，很多开发者习惯将方法区称之为“永久代(Parmanent Gen)” ，但严格本质上说两者不同，或者说使用永久代来实现方法区而已，**永久代是方法区(相当于是一个接口interface)的一个实现**，**jdk1.7的版本中，已经将原本放在永久代的字符串常量池移走**。	
-
-
-
-### 1.6.4 永生区（java7 之前有）
-
-​	永久存储区是一个常驻内存区域，用于存放JDK自身所携带的 Class,Interface 的元数据，也就是说它存储的是运行环境必须的类信息，被装载进此区域的数据是不会被垃圾回收器回收掉的，关闭 JVM 才会释放此区域所占用的内存。
-
-
-
-
-
-## 1.7 堆参数调优
-
-
-
-### 1.7.0 三大调优参数
+#### 1.1.6.1  三大调优参数
 
 - ​	-Xss：规定了每个线程虚拟机栈（堆栈）的大小
 
@@ -509,7 +84,7 @@ reference存储的就直接是对象的地址
 
 
 
-### 1.7.1 堆内存调优参数01
+#### 1.1.6.2  堆内存调优参数01
 
 
 
@@ -575,7 +150,7 @@ public class heap_01 {
   - **to**: 新生代堆空间的1/10
 - **ParoldGen**: 总堆内存的2/3
 
-### 1.7.2 修改参数并且造成异常OutOfMemoryError
+#### 1.1.6.3 修改参数并且造成异常OutOfMemoryError
 
 
 
@@ -629,7 +204,7 @@ public class heap_02 {
 
 ```
 
-### 1.7.3 GCDetail --- GC参数
+#### 1.1.6.4  GCDetail --- GC参数
 
 ![](\img\jvm\gc_01.bmp)
 
@@ -637,7 +212,7 @@ public class heap_02 {
 [GC (Allocation Failure) [PSYoungGen: 2026K->482K(2560K)] 2026K->754K(9728K), 0.0175772 secs] [Times: user=0.00 sys=0.00, real=0.03 secs]
 ```
 
-### 1.7.4 GCDetail --- Full GC 参数
+#### 1.1.6.4 GCDetail --- Full GC 参数
 
 ![](\img\jvm\gc_02.bmp)
 
@@ -649,102 +224,93 @@ public class heap_02 {
 
 
 
-## 1.8 元空间、堆、线程独占部分间的联系——内存角度
+### 1.1.7  元空间、堆、线程独占部分间的联系——内存角度
 
 
 
 ![](\img\jvm\mataspace_heap_stack_01.png)
 
-# 二、GC垃圾回收
+
+
+## 1.2 JVM 运行时内存
+
+Java 堆从 GC 的角度还可以细分为: **新生代**(Eden区、FromSurvivor区和 ToSurvivor区)和**老年代。**
+
+![](img/jvm/heap_01.jpg)
+
+### 1.2.1  新生代
+
+是用来存放新生的对象。一般占据堆的 1/3 空间。由于频繁创建对象，所以新生代会频繁触发
+
+MinorGC 进行垃圾回收。新生代又分为<font color='red'>  Eden 区、ServivorFrom、ServivorTo </font> 三个区。
+
+#### 1.2.1.1 Eden区
+
+<font color='red'> Java 新对象的出生地 </font>（<font color='cornflowerblue'>如果新创建的对象占用内存很大，则直接分配到老年代</font>）。当 Eden 区内存不够的时候就会触发 MinorGC，对新生代区进行一次垃圾回收。
+
+#### 1.2.1.2  ServivorFrom区
+
+ 上一次 GC 的幸存者，作为这一次 GC 的被扫描者  存放的区域
+
+#### 1.2.1.3 ServivorTo区  
+
+保留了一次 MinorGC 过程中的幸存者。
 
 
 
-## 2.1 GC是什么(分代收集算法)
+#### 1.2.1.4 <font color='red'>MinorGC的过程 （复制->清空->互换） </font>
 
-堆内存不够时 发生GC垃圾回收 
-
-- **次数上频繁收集Young区**
-- **次数上较少收集Old区**
-- **基本不动元空间**
+MinorGC采用<font color='red'>复制算法</font>
 
 
 
-## 2.2 判断对象已死的算法
+##### 1   **eden、servicorFrom 复制到ServicorTo，年龄+1**  
+
+首先，把 Eden 和 ServivorFrom 区域中存活的对象复制到 ServicorTo 区域（如果有对象的年龄以及达到了老年的标准，则赋值到老年代区），同时把这些对象的年龄+1（如果 ServicorTo 不够位置了就放到老年区）；
+
+##### 2   **清空eden、servicorFrom**  
+
+ 然后，清空 Eden 和 ServicorFrom 中的对象  
+
+##### 3    ServicorTo 和ServicorFrom 互换  
+
+最后，ServicorTo 和 ServicorFrom 互换，原 ServicorTo 成为下一次 GC 时的 ServicorFrom区。
 
 
 
-### 2.2.1 引用计数法
+### 1.2.2 老年代
 
-> -   思想：给对象设置引用计数器，每引用该对象一次，计数器就+1，引用失效时，计数器就-1，当任意时候引用计数器的值都为0时，则该对象可被回收 
-> -  Java不适用原因：**无法解决对象互相循环引用的问题** 
+主要存放应用程序中生命周期长的内存对象。
 
-![](\img\jvm\gc_03.bmp)
+老年代的对象比较稳定，所以 MajorGC 不会频繁执行。在进行 MajorGC 前一般都先进行了一次 MinorGC，使得有新生代的对象晋身入老年代，导致空间不够用时才触发。当无法找到足够大的连续空间分配给新创建的较大对象时也会提前触发一次 MajorGC 进行垃圾回收腾出空间。
 
-**循环引用举例**
+MajorGC 采用<font color='red'> 标记清除算法 </font>：首先扫描一次所有老年代，标记出存活的对象，然后回收没有标记的对象。MajorGC 的耗时比较长，因为要扫描再回收。MajorGC 会产生内存碎片，为了减少内存损耗，我们一般需要进行合并或者标记出来方便下次直接分配。当老年代也满了装不下的时候，就会抛出 OOM（Out of Memory）异常。
 
-```java
-package com.yang.sh.jvm;
+### 1.2.3  永久代
 
-public class RefCountGC
-{
-  private byte[] bigSize = new byte[2 * 1024 * 1024];//这个成员属性唯一的作用就是占用一点内存
-  Object instance = null;
- 
-  public static void main(String[] args)
-  {
-    RefCountGC objectA = new RefCountGC();
-    RefCountGC objectB = new RefCountGC();
-    objectA.instance = objectB;
-    objectB.instance = objectA;
-    objectA = null;
-    objectB = null;
- 
-    System.gc();
-  }
-}
-```
+指内存的永久保存区域，主要存放 Class 和 Meta（元数据）的信息,Class 在被加载的时候被放入永久区域，它和和存放实例的区域不同,<font color='red'> GC 不会在主程序运行期对永久区域进行清理 </font>。所以这也导致了永久代的区域会随着加载的 Class 的增多而胀满，最终抛出 OOM 异常。
 
-```java
-[GC (System.gc()) [PSYoungGen: 7434K->840K(38400K)] 7434K->848K(125952K), 0.0009070 secs] [Times: user=0.08 sys=0.02, real=0.00 secs] 
-[Full GC (System.gc()) [PSYoungGen: 840K->0K(38400K)] [ParOldGen: 8K->633K(87552K)] 848K->633K(125952K), [Metaspace: 3466K->3466K(1056768K)], 0.0045632 secs] [Times: user=0.00 sys=0.00, real=0.00 secs] 
-Heap
- PSYoungGen      total 38400K, used 998K [0x00000000d5f00000, 0x00000000d8980000, 0x0000000100000000)
-  eden space 33280K, 3% used [0x00000000d5f00000,0x00000000d5ff9b20,0x00000000d7f80000)
-  from space 5120K, 0% used [0x00000000d7f80000,0x00000000d7f80000,0x00000000d8480000)
-  to   space 5120K, 0% used [0x00000000d8480000,0x00000000d8480000,0x00000000d8980000)
- ParOldGen       total 87552K, used 633K [0x0000000081c00000, 0x0000000087180000, 0x00000000d5f00000)
-  object space 87552K, 0% used [0x0000000081c00000,0x0000000081c9e458,0x0000000087180000)
- Metaspace       used 3481K, capacity 4496K, committed 4864K, reserved 1056768K
-  class space    used 385K, capacity 388K, committed 512K, reserved 1048576K
-```
+#### 1.2.3.1 **JAVA8 与元数据**  
 
+在 Java8 中，<font color='red'> 永久代已经被移除，被一个称为“元数据区”（元空间）的区域所取代 </font>。元空间的本质和永久代类似，元空间与永久代之间最大的区别在于：<font color='cornflowerblue'>元空间并不在虚拟机中，而是使用本地内存</font>。因此，默认情况下，元空间的大小仅受本地内存限制。<font color='cornflowerblue'>类的元数据放入 native memory, 字符串池和类的静态变量放入 java 堆中</font>，这样可以加载多少类的元数据就不再由MaxPermSize 控制, 而由系统的实际可用空间来控制。
 
+## 1.3 垃圾回收与算法
 
-可以从日志中看出存在7434k->848k 所以说明虚拟机不是通过引用计数来判定对象是否死亡的
+​                   <img src="img/jvm/laijihuishou.jpg" alt="img" style="zoom: 80%;" />     
 
+### 1.3.1  如何确定垃圾
 
+#### 1.3.1.1 引用计数法
 
-### 2.2.1 可达性分析算法 根搜索算法（JVM采用的算法） 
+-   思想：给对象设置引用计数器，每引用该对象一次，计数器就+1，引用失效时，计数器就-1，当任意时候引用计数器的值都为0时，则该对象可被回收 
+-   <font color='red'>Java不适用原因：**无法解决对象互相循环引用的问题** </font>
 
+#### 1.3.1.2 根搜索算法
 
+为了解决引用计数法的循环引用问题，Java 使用了可达性分析的方法。<font color='cornflowerblue'>通过一系列的“GC roots”对象作为起点搜索</font>。如果在“GC roots”和一个对象之间没有可达路径，则称该对象是不可达的。
+ 要注意的是，不可达对象不等价于可回收对象，<font color='red'>不可达对象变为可回收对象至少要经过两次标记过程</font>。两次标记后仍然是可回收对象，则将面临回收。
 
-概念：**设立若干种根对象，当任何一个根对象（GC Root）到某一个对象均不可达时，则认为这个对象是可以被回收的。**
-
-
-
-可达性分析：
-
-从根（GC root）的对象作为起始点，开始向下搜索，搜索所走过的路径称为“引用链”，当一个对象到GC root没有任何引用链相连（用凸轮的概念来讲，就是从GC Root到这个对象不可达）时，则证明此对象是不可用的。
-
-![](\img\jvm\gc_04.png)
-
- 
-
-如上图所示，ObjectD和ObjectE是互相关联的，但是由于GC root到这两个对象不可达，所以最终D和E还是会被当做GC的对象，**上图若是采用引用计数法，则A-E五个对象都不会被回收。** 
-
-**根（GC roots）**
-
-说到GC roots（GC根），在Java语言中，可以当做GC root的对象有以下几种：
+<font color='cornflowerblue'>GC roots（GC根）</font>
 
 > 1.栈（栈帧的本地变量表）中引用的对象
 >
@@ -753,8 +319,6 @@ Heap
 > 3.方法区中的常量引用的对象（全局变量）
 >
 > 4.本地方法栈中JNI（一般说是Native方法）引用的对象。
-
-注意：第一和第四都是指的方法的本地变量表，第二种表达的意思比较清晰，第三种主要指的是生命为final的常量值。
 
  **一个对象真正不可用，要经历两次标记过程：** 
 
@@ -765,194 +329,201 @@ Heap
 
 
 
-## 2.3 垃圾收集算法
+### 1.3.2 垃圾收集算法
 
-### 2.3.0 常用调优参数
+#### 1.3.2.1 复制算法
 
--XX：survivorRatio : Eden 和 survivor的比例，默认8： 1
+​         为了解决 Mark-Sweep 算法内存碎片化的缺陷而被提出的算法。<font color='cornflowerblue'> 按内存容量将内存划分为等大小的两块。每次只使用其中一块，当这一块内存满后将尚存活的对象复制到另一块上去，把已使用的内存清掉 </font>
 
--XX：NewRatio :老年代和年轻代的比例：
+​                   <img src="img/jvm/suanfa_fuzhi.jpg" alt="img" style="zoom:50%;" />     
 
--XX：MaxtenuringThreshold :对象从年轻代晋升到老年代经过的GC的最大次数
+<font color='cornflowerblue'> 这种算法虽然实现简单，内存效率高，不易产生碎片 </font>，但是**最大的问题**是<font color='red'>可用内存被压缩到了原本的一半。且存活对象增多的话，Copying 算法的效率会大大降低。</font>
 
+> **年轻代**中使用的是Minor GC，这种GC算法采用的是复制算法(Copying)
 
 
-### 2.3.1 复制算法
 
-> **复制算法的基本思想就是将内存分为两块，每次只用其中一块，当这一块内存用完，就将还活着的对象复制到另外一块上面。复制算法不会产生内存碎片。**
+#### 1.3.2.2 **标记清除算法（Mark-Sweep）**  
 
-**年轻代**中使用的是Minor GC，这种GC算法采用的是复制算法(Copying)
+最基础的垃圾回收算法，分为两个阶段，标<font color='cornflowerblue'> 注和清除。标记阶段标记出所有需要回收的对象，清除阶段回收被标记的对象所占用的空间 </font>。如图
 
+​                   <img src="img/jvm/suanfa_marksweep.jpg" alt="img" style="zoom:50%;" />     
 
+从图中我们就可以发现，<font color='red'>该算法最大的问题是内存碎片化严重</font>，后续可能发生大对象不能找到可利用空间的问题。
 
-![](img\jvm\heap_01.png)
 
-Minor GC会把Eden中的所有活的对象都移到Survivor区域中，如果Survivor区中放不下，那么剩下的活的对象就被移到Old  generation中，**也即一旦收集后，Eden是就变成空的了**。
-  当对象在 Eden ( 包括一个 Survivor 区域，这里假设是 from 区域 ) 出生后，在经过一次 Minor GC 后，如果对象还存活，并且能够被另外一块 Survivor 区域所容纳( 上面已经假设为 from 区域，这里应为 to 区域，即 to 区域有足够的内存空间来存储 Eden 和 from 区域中存活的对象 )，则使用复制算法将这些仍然还存活的对象复制到另外一块 Survivor 区域 ( 即 to 区域 ) 中，然后清理所使用过的 Eden 以及 Survivor 区域 ( 即 from 区域 )，并且将这些对象的年龄设置为1，以后对象在 Survivor 区每熬过一次 Minor GC，就将对象的年龄 + 1，当对象的年龄达到某个值时 ( 默认是 15 岁，通过-XX:MaxTenuringThreshold 来设定参数)，这些对象就会成为老年代。
 
-**-XX:MaxTenuringThreshold — 设置对象在新生代中存活的次数**
+#### 1.3.2.3 **标记整理算法**（Mark-Compact）
 
- 
+结合了以上两个算法，为了避免缺陷而提出。标记阶段和 Mark-Sweep 算法相同，<font color='cornflowerblue'> 标记后不是清理对象，而是将存活对象移向内存的一端。然后清除端边界外的对象 </font>。如图：
 
-因为年轻代中的对象基本都是朝生夕死的(90%以上)，所以在年轻代的垃圾回收算法使用的是复制算法，**复制算法的基本思想就是将内存分为两块，每次只用其中一块，当这一块内存用完，就将还活着的对象复制到另外一块上面。复制算法不会产生内存碎片。**
+​                   <img src="img/jvm/suanfa_markcompact.jpg" alt="img" style="zoom:50%;" />     
 
+标记/理算法<font color='red'> 唯一的缺点就是效率也不高，不仅要标记所有存活对象，还要整理所有存活对象的引整用地址。 </font>
 
+#### 1.3.2.4 分代收集算法
 
-![](.\img\jvm\gc_05.bmp)
+分代收集法是目前大部分 JVM 所采用的方法，其核心思想是<font color='cornflowerblue'>根据对象存活的不同生命周期将内存划分为不同的域，一般情况下将 GC 堆划分为老生代(Tenured/Old Generation)和新生代(Young Generation)</font>。<font color='cornflowerblue'>老生代的特点是每次垃圾回收时只有少量对象需要被回收，新生代的特点是每次垃圾回收时都有大量垃圾需要被回收</font>，因此可以根据不同区域选择不同的算法。
 
+##### 1  **新生代-----复制算法**
 
+目前大部分 JVM 的 GC 对于新生代都采取 Copying 算法，<font color='cornflowerblue'> 因为新生代中每次垃圾回收都要回收大部分对象，即要复制的操作比较少 </font>，但通常并不是按照 1：1 来划分新生代。一般将新生代划分为一块较大的 Eden 空间和两个较小的 Survivor 空间(From Space, To Space)，每次使用Eden 空间和其中的一块 Survivor 空间，当进行回收时，将该两块空间中还存活的对象复制到另一块 Survivor 空间中。
 
-复制算法它的**缺点**也是相当明显的。 
-　　1、它浪费了一半的内存，这太要命了。 
-　　2、如果对象的存活率很高，我们可以极端一点，假设是100%存活，那么我们需要将所有对象都复制一遍，并将所有引用地址重置一遍。复制这一工作所花费的时间，在对象存活率达到一定程度时，将会变的不可忽视。 所以从以上描述不难看出，复制算法要想使用，最起码对象的存活率要非常低才行，而且最重要的是，我们必须要克服50%内存的浪费。
+ ![](img/jvm/fengdai_fuzhi.jpg)
 
+##### 2 老年代-----标记整理算法
 
+<font color='red'> 而老年代因为每次只回收少量对象，因而采用 Mark-Compact 算法。 </font>
 
-### 2.3.2 标记-清除算法
+1. JAVA 虚拟机提到过的处于方法区的永生代(Permanet Generation)，<font color='cornflowerblue'>它用来存储 class 类，常量，方法描述等</font>对永生代的回收主要包括废弃常量和无用的类。
 
-![](img\jvm\gc_06.bmp)
+2. 对象的内存分配主要在新生代的 Eden Space 和 Survivor Space 的 From Space(Survivor 目
 
-![](img\jvm\gc_07.bmp)
+前存放对象的那一块)，少数情况会直接分配到老生代。
 
+3. 当新生代的 Eden Space 和 From Space 空间不足时就会发生一次 GC，进行 GC 后，Eden Space 和 From Space 区的存活对象会被挪到 To Space，然后将 Eden Space 和 From Space 进行清理。
 
+4. 如果 To Space 无法足够存储某个对象，则将这个对象存储到老生代。
 
-用通俗的话解释一下标记清除算法，就是当程序运行期间，若可以使用的内存被耗尽的时候，GC线程就会被触发**并将程序暂停**，随后将要回收的对象标记一遍，最终统一回收这些对象，完成标记清理工作接下来便让应用程序恢复运行。
+5. 在进行 GC 后，使用的便是 Eden Space 和 To Space 了，如此反复循环。 
 
-主要进行两项工作，第一项则是标记，第二项则是清除。  
-  标记：从引用根节点开始标记遍历所有的GC Roots， 先标记出要回收的对象。
-  清除：遍历整个堆，把标记的对象清除。 
+6. 当对象在 Survivor 区躲过一次 GC 后，其年龄就会+1。<font color='cornflowerblue'>默认情况下年龄到达 15 的对象会被移到老生代中</font>
 
-**缺点**：
+## 2.4 java中的四种引用类型
 
-1、首先，它的缺点就是效率比较低（递归与全堆对象遍历），而且**在进行GC的时候，需要停止应用程序**，这会导致用户体验非常差劲
-2、其次，主要的缺点则是这种方式**清理出来的空闲内存是不连续的**，这点不难理解，我们的死亡对象都是随即的出现在内存的各个角落的，现在把它们清除之后，内存的布局自然会乱七八糟。而为了应付这一点，JVM就不得不维持一个内存的空闲列表，这又是一种开销。而且在分配数组对象的时候，寻找连续的内存空间会不太好找。 
+<img src="img/jvm/jvm_reference_01.png" style="zoom: 50%;" />
 
+### 2.4.1 强引用
 
+在 Java 中最常见的就是强引<font color='cornflowerblue'>用，把一个对象赋给一个引用变量，这个引用变量就是一个强引用。当一个对象被强引用变量引用时</font>，它处于可达状态，它是不可能被垃圾回收机制回收的，即使该对象以后永远都不会被用到 JVM 也不会回收。因此强引用是造成 Java 内存泄漏的主要原因之一。
 
-### 2.3.3 标记-整理算法
+### 2.4.2 软引用
 
+软引用需要用 SoftReference 类来实现，对于只有软引用的对象来说，<font color='cornflowerblue'> 当系统内存足够时它不会被回收，当系统内存空间不足时它会被回收 </font>。软引用通常用在对内存敏感的程序中。
 
+### 2.4.3 弱引用 
 
-**老年代一般是由标记清除或者是标记清除与标记整理的混合实现**
+弱引用需要用 WeakReference 类来实现，它比软引用的生存期更短，对于只有弱引用的对象来说，<font color='cornflowerblue'>只要垃圾回收机制一运行，不管 JVM 的内存空间是否足够，总会回收该对象占用的内存。</font>
 
+### 2.4.4 虚引用
 
+虚引用需要 PhantomReference 类来实现，<font color='cornflowerblue'>它不能单独使用，必须和引用队列联合使用。虚引用的主要作用是跟踪对象被垃圾回收的状态。</font>
 
-![](img\jvm\gc_08.bmp)
 
-在整理压缩阶段，不再对标记的对像做回收，而是通过所有存活对像都向一端移动，然后直接清除边界以外的内存。
-可以看到，标记的存活对象将会被整理，按照内存地址依次排列，而未被标记的内存会被清理掉。如此一来，当我们需要给新对象分配内存时，JVM只需要持有一个内存的起始地址即可，这比维护一个空闲列表显然少了许多开销。 
 
-　　标记/整理算法不仅可以弥补标记/清除算法当中，内存区域分散的缺点，也消除了复制算法当中，内存减半的高额代价
+## 2.5  **GC 分代收集算法 VS 分区收集算法**  
 
-**缺点**
+### 2.5.1 分代收集算法
 
-标记/理算法唯一的缺点就是效率也不高，不仅要标记所有存活对象，还要整理所有存活对象的引整用地址。
-从效率上来说，标记/整理算法要低于复制算法。
+当前主流 VM 垃圾收集都采用”分代收集”(Generational Collection)算法, <font color='cornflowerblue'> 这种算法会根据对象存活周期的不同将内存划分为几块, 如 JVM 中的 新生代、老年代、永久代，这样就可以根据各年代特点分别采用最适当的 GC 算法 </font>
 
+#### **2.5.1.1.**   **在新生代-复制算法**
 
+每次垃圾收集都能发现大批对象已死, 只有少量存活. 因此选用<font color='cornflowerblue'>复制算法</font>, 只需要付出少量 存活对象的复制成本就可以完成收集.
 
-### 2.3.4 分代收集算法
+#### **2.5.1.2.**   **在老年代-标记整理算法**
 
-**一句话就是根据对象的 活动周期的不同将内存划为几块**。一般是把java中的堆分为新生代和老年代，这样就可以对不同年代的特点采用合适的收集算法。
+<font color='cornflowerblue'> 因为对象存活率高、没有额外空间对它进行分配担保, 就必须采用“标记—清理”或“标记—整理”算法来进行回收 </font>, 不必进行内存复制, 且直接腾出空闲内存.
 
-新生代中，每次垃圾回收都有大量对象死去，只有少量存活，那就采用复制算法。
+### **2.5.2.** **分区收集算法**
 
-而老年代中对象的存活率高，没有额外空间对它进行分配担保，那么就采用‘’标记-清除‘’ 和标记-整理算法来进行回收。
+分区算法则将整个<font color='cornflowerblue'> 堆空间划分为连续的不同小区间, 每个小区间独立使用, 独立回收 </font>. 这样做的好处是可以控制一次回收多少个小区间 , 根据目标停顿时间, 每次合理地回收若干个小区间(而不是整个堆), 从而减少一次 GC 所产生的停顿。
 
 
 
-## 2.4 常见的垃圾回收器
+## 2.6 GC垃圾收集器
 
+[Java](http://lib.csdn.net/base/javase) 堆内存被划分为新生代和年老代两部分，新生代主要使用复制和标记-清除垃圾回收[算法](http://lib.csdn.net/base/datastructure)；年老代主要使用标记-整理垃圾回收算法，因此 java 虚拟中针对新生代和年老代分别提供了多种不
 
+同的垃圾收集器，JDK1.6 中 Sun HotSpot 虚拟机的垃圾收集器如下：
 
-<img src=".\img\jvm\jvm_connection_lajihuishouqi.png" style="zoom:67%;" />
+​                    <img src="img/jvm/lajishoujiqi.jpg" alt="img" style="zoom:50%;" />     
 
+### 2.6.1   Serial 垃圾收集器（单线程、复制算法）
 
+<font color='cornflowerblue'>Serial（英文连续）是最基本垃圾收集器，使用复制算法，</font>曾经是 JDK1.3.1 之前新生代唯一的垃圾收集器。<font color='red'> Serial 是一个单线程的收集器，它不但只会使用一个 CPU 或一条线程去完成垃圾收集工作，并且在进行垃圾收集的同时，必须暂停其他所有的工作线程，直到垃圾收集结束。 </font>
 
+Serial 垃圾收集器虽然在收集垃圾过程中需要暂停所有其他的工作线程，但是它简单高效，对于限定单个 CPU 环境来说，没有线程交互的开销，可以获得最高的单线程垃圾收集效率，因此 Serial垃圾收集器依然是<font color='cornflowerblue'> java 虚拟机运行在 Client 模式下默认的新生代垃圾收集器。</font>
 
+### 2.6.2  **ParNew 垃圾收集器（Serial+多线程）**  
 
-### 2.4.1 Serial 收集器
+ParNew 垃圾收集器其实是 <font color='cornflowerblue'>Serial 收集器的多线程版本</font>，也使用复制算法，除了使用多线程进行垃圾收集之外，其余的行为和 Serial 收集器完全一样，ParNew 垃圾收集器在垃圾收集过程中同样也要暂停所有其他的工作线程。
 
+ParNew 收集器默认开启和 CPU 数目相同的线程数，可以通过-XX:ParallelGCThreads 参数来限
 
+ 制垃圾收集器的线程数。【Parallel：平行的】
 
-<img src=".\img\jvm\jvm_shoujiqi_serial.png" style="zoom:80%;" />
+<font color='cornflowerblue'>ParNew 虽然是除了多线程外和 Serial 收集器几乎完全一样，但是 ParNew 垃圾收集器是很多 java虚拟机运行在 Server 模式下新生代的默认垃圾收集器。</font>
 
-### 2.4.2 ParNew 收集器
+### 2.6.3  Parallel Scavenge 收集器（多线程复制算法、高效）
 
-![](.\img\jvm\jvm_shoujiqi_parNew.png)
+Parallel Scavenge 收集器也是一个新生代垃圾收集器，同样使用复制算法，也是一个多线程的垃圾收集器，<font color='cornflowerblue'> 它重点关注的是程序达到一个可控制的吞吐量 </font>（Thoughput，CPU 用于运行用户代码的时间/CPU 总消耗时间，即<font color='red'> 吞吐量=运行用户代码时间/(运行用户代码时间+垃圾收集时间)） </font>，高吞吐量可以最高效率地利用 CPU 时间，尽快地完成程序的运算任务，主要适用于在后台运算而不需要太多交互的任务。<font color='cornflowerblue'>自适应调节策略也是 ParallelScavenge 收集器与 ParNew 收集器的一个重要区别。</font>
 
-### 2.4.3 Parallel Scavenge收集器
+### 2.6.4  **Serial** **Old** **收集器（单线程标记整理算法** **）**
 
-![](.\img\jvm\jvm_shoujiqi_ParallelScavenge.png)
+<font color='cornflowerblue'> Serial Old 是 Serial 垃圾收集器年老代版本</font>，它同样是个单线程的收集器，使用标记-整理算法，这个收集器也主要是owerblue'>运行在 Client 默认的 java 虚拟机默认的年老代垃圾收集器。</font>
 
-### 2.4.4 Serial Old 收集器
+在 Server 模式下，主要有两个用途：
 
-![](E:\code\review\img\jvm\jvm_shoujiqi_serial_old.png)
+1. 在 JDK1.5 之前版本中与新生代的 Parallel Scavenge 收集器搭配使用。
 
-### 2.4.5 Parallel Old 收集器
+2. 作为年老代中使用 CMS 收集器的后备垃圾收集方案。新生代 Serial 与年老代 Serial Old 搭配垃圾收集过程图：
 
-![](.\img\jvm\jvm_shoujiqi_Parallel_old.png)
+   ​                   <img src="img/jvm/serialandserialold.jpg" alt="img" style="zoom:50%;" />     
 
-### 2.4.6 CMS 收集器
+新生代 Parallel Scavenge 收集器与 ParNew 收集器工作原理类似，都是多线程的收集器，都使用的是复制算法，在垃圾收集过程中都需要暂停所有的工作线程。新生代 Parallel Scavenge/ParNew 与年老代 Serial Old 搭配垃圾收集过程图：
 
+​                   <img src="img/jvm/serialoldandparnew.jpg" alt="img" style="zoom:50%;" />     
 
+### 2.6.5   **Parallel Old 收集器（多线程标记整理算法）**  
 
-> 特点：是一种以获取最短回收停顿时间为目标的收集器，采用标记-清除算法
->
-> 收集过程：
->
-> 初始标记： stop the world 标记GC Roots能直接关联到的对象 
->
-> 并发标记：进行GC Roots Tracing 
->
-> 重新标记：stop the world；修正并发标记期间因用户程序继续运作而导致标记产生变动的 那一部分对象的标记记录 
->
-> 并发清除：清除对象
->
-> **优点**： 并发收集，低停顿
->
-> **缺点**： 对CPU资源敏感
->
-> ​		       无法处理浮动垃圾
->
-> ​              产生大量的内存碎片 
+Parallel Old 收集器是 Parallel Scavenge 的年老代版本，使用多线程的标记-整理算法，在 JDK1.6才开始提供。
 
-<img src=".\img\jvm\jvm_shoujiqi_cms.png" style="zoom:60%;" />
+在 JDK1.6 之前，新生代使用 ParallelScavenge 收集器只能搭配年老代的 Serial Old 收集器，只能保证新生代的吞吐量优先，无法保证整体的吞吐量，<font color='cornflowerblue'>Parallel Old 正是为了在年老代同样提供吞吐量优先的垃圾收集器</font>，如果系统对吞吐量要求比较高，可以优先考虑新生代 Parallel Scavenge和年老代 Parallel Old 收集器的搭配策略。
 
-![](.\img\jvm\jvm_shoujiqi_cms_01.png)
+新生代 Parallel Scavenge 和年老代 Parallel Old 收集器搭配运行过程图：
 
-> 初始标记只是对GC root 能直接关联到的对象进行标记
->
-> 并发标记是根据GCroot 进行Tracing的过程
->
-> 重新标记是修正并发标记那段时间发生变动的数据
->
-> 并发清理执行清理过程
+​                   <img src="img/jvm/pallerold.jpg" alt="img" style="zoom:50%;" />     
 
-**缺点：**
+### 2.6.6  **CMS 收集器（多线程标记清除算法）**
 
-> 1、CMS收集器对CPU非常敏感，由于和用户线程并发执行，所以会占用一部分的CPU资源，使应用程序变慢，吞吐量降低 
+Concurrent mark sweep(CMS)收集器是一种年老代垃圾收集器，其最<font color='cornflowerblue'>主要目标是获取最短垃圾回收停顿时间</font>，和其他年老代使用标记-整理算法不同，它使用多线程的标记-清除算法。最短的垃圾收集停顿时间可以为交互比较高的程序提高用户体验。
 
-> 2、会产生浮动垃圾，CMS并发清理的时候用户线程也在运行，自然就会有垃圾不断产生，这些垃圾只能等下一次垃圾回收时被清理
+CMS 工作机制相比其他的垃圾收集器来说更复杂，整个过程分为以下 4 个阶段：
 
-> 3、由于基于标记-清除算法实现，会产生很多的内存碎片
+  <font color='red'>1、初始标记</font>
 
+只是标记一下 GC Roots 能直接关联的对象，速度很快，仍然需要暂停所有的工作线程。
 
+ <font color='red'>  2、并发标记 </font>
 
-### 2.4.7 G1收集器
+进行 GC Roots 跟踪的过程，和用户线程一起工作，不需要暂停工作线程。
 
-> G1收集器将内存划分为多个大小相同的Region,每个Region分给各个年轻代和老年代。它虽然还保持了年轻代和老年代的概念，但是老年代和年轻代之间不再是物理隔离。并且每个Region在每个代之间可以自由切换。
->
-> 并且G1收集器还有以下特点
->
-> - 并发和并行，尽可能的缩短stop the world
->
-> - 分代收集：采用不同的方式去处理不同代
->
-> - G1整体上是采用标记整理算法，从两个region来看是采用复制算法实现的，所以 不会产生内存碎片
-> - 可预测停顿，G1除了追求低停顿以外，还能 建立可预测停顿时间模型，可以在用户指定的时间内尽可能回收最大价值的Region
->
-> G1的收集步骤包括以下四个步骤
+<font color='red'>  3、重新标记</font>
+
+为了修正在并发标记期间，因用户程序继续运行而导致标记产生变动的那一部分对象的标记
+
+记录，仍然需要暂停所有的工作线程。
+
+ <font color='red'>4、并发清除</font>
+
+清除 GC Roots 不可达对象，和用户线程一起工作，不需要暂停工作线程。由于<font color='orange'>耗时最长的并发标记和并发清除过程中</font>，垃圾收集线程可以和用户现在一起并发工作，所以<font color='cornflowerblue'> 总体上来看CMS 收集器的内存回收和用户线程是一起并发地执行。 </font>
+
+​                   ![img](img/jvm/cms.jpg)     
+
+### 2.6.7  G1 收集器
+
+Garbage first 垃圾收集器是目前垃圾收集器理论发展的最前沿成果，相比与 CMS 收集器，G1 收集器两个最突出的改进是：
+
+1. <font color='cornflowerblue'> 基于标记-整理算法，不产生内存碎片。  </font>
+
+2. <font color='cornflowerblue'>可以非常精确控制停顿时间，在不牺牲吞吐量前提下，实现低停顿垃圾回收。 </font>
+
+<font color='cornflowerblue'>G1 收集器避免全区域垃圾收集，它把堆内存划分为大小固定的几个独立区域</font>，并且跟踪这些区域的垃圾收集进度，同时在后台维护一个优先级列表，每次根据所允许的收集时间，<font color='cornflowerblue'>优先回收垃圾最多的区域</font>。区域划分和优先级区域回收机制，确保 G1 收集器可以在有限时间获得最高的垃圾收集效率。
+
+<font color='cornflowerblue'> G1整体上是采用标记整理算法，从两个region来看是采用复制算法实现的，所以 不会产生内存碎片 </font>
+
+> <font color='red'> G1的收集步骤包括以下四个步骤 </font>
 >
 > **初始标记:** 仅仅标记GC root能直接关联道德 对象 
 >
@@ -962,25 +533,7 @@ Minor GC会把Eden中的所有活的对象都移到Survivor区域中，如果Sur
 >
 > **筛选回收**：根据时间来进行最大价值进行回收
 
-
-
-**以前收集器的特点**
-
-> 年轻代和老年代是各自独立且连续的内存块
->
-> 年轻代收集使用单eden+S0 +S进行复制算法
->
-> 老年代收集必须扫描整个老年代区域
->
-> 都是以尽可能少而快速地执行GC为设计原则
-
-![](img/juc_img/G1_tedian.png)
-
-> 1. G1 能充分利用多CPU、多核环境的硬件优势，尽可能的缩短stop the world
-> 2. G1 整体上采用标记整理算法，局部使用复制算法，**不会产生内存碎片**
-> 3. 宏观上G1不分年轻代和老年代。而是把内存划分为多个独立的 子区域
-> 4. G1将整个内存都混合在一起了，但是其本身依旧在小范围进行年轻代和老年代的区分。但是他们不再是物理隔离的，而是一个个Region区域，也就是说依旧会采用不同的GC方式来处理不同的区域。
-> 5. G1虽然也是分代收集器，但是整个内存分区**不存在物理上**的年轻代和老年代的区别。G1只有**逻辑上的分代概念，**或者说每个分区都会随着G1的运行在不同代之前切换
+![](img/jvm/G1_process_1.png)
 
 #### 底层原理
 
@@ -997,23 +550,149 @@ Minor GC会把Eden中的所有活的对象都移到Survivor区域中，如果Sur
 
 **最大好处是化整为零，避免全内存扫描，只需要按照区域来进行扫描即可**
 
-#### 回收过程
+## 2.7 jvm 类加载机制
 
-![](img/jvm/G1_process.png)
+JVM 类加载机制分为五个部分：<font color='red'> 加载，验证，准备，解析，初始化 </font>，下面我们就分别来看一下这五个过程。
 
-![](img/jvm/G1_process_1.png)
+​                   ![img](img\jvm_classGet_01.png)     
 
-### 和CMS相比的优势
+### 2.7.1 加载
 
-> （1）G1不会产生内存碎片
->
-> （2）可以精准停顿。每次根据允许停顿时间去收集垃圾最多的区域
+加载是类加载过程中的一个阶段，<font color='cornflowerblue'> 这个阶段会在内存中生成一个代表这个类的 java.lang.Class 对象，作为方法区这个类的各种数据的入口 </font>。注意这里不一定非得要从一个 Class 文件获取，这里既可以从 ZIP 包中读取（比如从 jar 包和 war 包中读取），也可以在运行时计算生成（动态代理），也可以由其它文件生成（比如将 JSP 文件转换成对应的 Class 类）。
+
+### 2.7.2 验证
+
+这一阶段的主要目的是为了<font color='cornflowerblue'>确保 Class 文件的字节流中包含的信息是否符合当前虚拟机的要求</font>，并且不会危害虚拟机自身的安全。 
+
+### 2.7.3 准备
+
+准备阶段是正式<font color='cornflowerblue'>为类变量分配内存并设置类变量的初始值阶段</font>，即<font color='cornflowerblue'> 在方法区中分配这些变量所使用的内存空间 </font>。注意这里所说的初始值概念，比如一个类变量定义为：
+
+`public static int v = 8080;`
+
+<font color='green'> 实际上变量 v 在准备阶段过后的初始值为 0 而不是 8080 </font>，将 v 赋值为 8080 的 put static 指令是程序被编译后，<font color='cornflowerblue'> 存放于类构造器<client>方法之中。 </font>
+
+但是注意如果声明为：
+
+`public static final int v = 8080;`
+
+  在编译阶段会为 v 生成 ConstantValue 属性，<font color='cornflowerblue'>在准备阶段虚拟机会根据 ConstantValue 属性将 v赋值为 8080  </font>
+
+### 2.7.4 解析
+
+解析阶段是指<font color='cornflowerblue'>虚拟机将常量池中的符号引用替换为直接引用的过程</font>。符号引用就是 class 文件中的：
+
+1. `CONSTANT_Class_info` 
+
+2. `CONSTANT_Field_info` 
+
+3. `CONSTANT_Method_info` 
+
+等类型的常量。
+
+<font color='red'>符号引用</font>
+
+> 符号引用与虚拟机实现的布局无关，<font color='cornflowerblue'>引用的目标并不一定要已经加载到内存中。各种虚拟机实现的内存布局可以各不相同</font>，但是它们能接受的符号引用必须是一致的，因为符号引用的字面量形式明确定义在 Java 虚拟机规范的 Class 文件格式中。
+
+<font color='red'> 直接引用 </font>
+
+> 直接引用可以是<font color='cornflowerblue'>指向目标的指针，相对偏移量或是一个能间接定位到目标的句柄</font>。如果有了直接引用，<font color='cornflowerblue'> 那引用的目标必定已经在内存中存在 </font>。
+
+### 2.7.5 初始化
+
+初始化阶段是类加载最后一个阶段，前面的类加载阶段之后，除了在加载阶段可以自定义类加载
+
+器以外，其它操作都由 JVM 主导。到了初始阶段，才开始真正执行类中定义的 Java 程序代码。
+
+<font color='cornflowerblue'>执行类变量赋值和静态代码块</font>
+
+
+
+## 2.8  类装载器ClassLoader
+
+ 	
+
+​	负责加载class文件，class文件在**文件开头有特定的文件标示**，将class文件字节码内容加载到内存中，并将这些内容转换成方法区中的运行时数据结构,并且ClassLoader只负责class文件的加载，至于它是否可以运行，则由Execution Engine决定 
+
+
+
+![](img\jvm\classloader_01.png)
+
+### 2.8.1 jvm 类加载器3+1
+
+
+
+![](img\jvm\classloader_02.png)
+
+
+
+#### 1   **Bootstrap ClassLoader/启动类加载器** 
+
+
+
+负责加载`JAVA_HOME\lib</font>` 目录中的，或通过<font color='cornflowerblue'>-`Xbootclasspath`</font> 参数指定路径中的，且被 
+
+虚拟机认可（按文件名识别，如 rt.jar）的类。
+
+
+
+#### 2   **Extension ClassLoader/扩展类加载器** 
+
+
+
+负责加载 `JAVA_HOME\lib\ext` 目录中的，或通过 java.ext.dirs 系统变量指定路径中的类
+
+库。
+
+#### 3   Application ClassLoader/系统类加载器
+
+负责加载`用户路径（classpath）`上的类库。
+
+JVM 通过双亲委派模型进行类的加载，当然我们也可以通过继承 java.lang.ClassLoader实现自定义的类加载器。
+
+#### 4  User Custom ClassLoader/用户自定义类加载器
+
+ 在程序运行期间, 通过`java.lang.ClassLoader`的子类动态加载class文件, 体现java动态实时类装入特性. 
+
+
+
+```java
+package com.yang.sh.jvm;
+
+public class MyObject {
+    public static void main(String[] args) {
+        Object object = new Object();
+        //System.out.println(object.getClass().getClassLoader().getParent().getParent());
+        //Exception in thread "main" java.lang.NullPointerException
+        //System.out.println(object.getClass().getClassLoader().getParent());
+        //Exception in thread "main" java.lang.NullPointerException
+        System.out.println(object.getClass().getClassLoader());
+        //null
+
+        MyObject myObject = new MyObject();
+        System.out.println(myObject.getClass().getClassLoader().getParent().getParent());
+        //null
+        System.out.println(myObject.getClass().getClassLoader().getParent());
+        //sun.misc.Launcher$ExtClassLoader@14ae5a5
+        System.out.println(myObject.getClass().getClassLoader());
+        //sun.misc.Launcher$AppClassLoader@18b4aac2
+        
+    }
+}
+
+```
+
+
+
+### 1.1.3 双亲委派机制
+
+<font color='cornflowerblue'> 当一个类收到了类加载请求，他首先不会尝试自己去加载这个类，而是把这个请求委派给父类去完成 </font>，每一个层次类加载器都是如此，因此所有的加载请求都应该传送到启动类加载，<font color='cornflowerblue'>只有当父类加载器反馈自己无法完成这个请求的时候（在它的加载路径下没有找到所需加载的Class）</font>，子类加载器才会尝试自己去加载。
 
  
 
-## 2.5 强-软-弱-虚引用
+采用双亲委派的一个好处是比如加载位于 rt.jar 包中的类 java.lang.Object，不管是哪个加载器加载这个类，最终都是委托给顶层的启动类加载器进行加载，这样就<font color='cornflowerblue'> 保证了使用不同的类加载器最终得到的都是同样一个 Object 对象。 </font>
 
-![](.\img\jvm\jvm_reference_01.png)
+​                   ![img](img/jvm/shuangqingweipai.jpg)     
 
-![](.\img\jvm\jvm_reference_02.png)
+
 
