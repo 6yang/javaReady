@@ -5,16 +5,16 @@
 #IfWinActive ahk_exe Typora.exe
 {
     ; Ctrl+Alt+O 橙色
-    ^!o::addFontColor("orange")
+    ^!o::addFontColor("#f37b1d")
  
     ; Ctrl+Alt+R 红色
-    ^!r::addFontColor("red")
+    ^!r::addFontColor("#e54d42")
  
     ; Ctrl+Alt+B 浅蓝色
     ^!b::addFontColor("cornflowerblue")
 
     ; Ctrl+Alt+g 绿色
-    ^!g::addFontColor("green")
+    ^!g::addFontColor("#39b54a")
 }
  
 ; 快捷增加字体颜色

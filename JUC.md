@@ -1227,7 +1227,7 @@ public class ReadWriteLockDemo {
 阻塞：必须要阻塞/不得不阻塞 
 阻塞队列是一个队列，在数据结构中起的作用如下图：
 
-![](\img\juc_img\blockingQueue_01.bmp)
+![](img/juc/blockingQueue_01.bmp)
 
 当队列是空的，从队列中获取元素的操作将会被阻塞
 当队列是满的，从队列中添加元素的操作将会被阻塞
@@ -1253,7 +1253,7 @@ public class ReadWriteLockDemo {
 
 ## 11.3 种类梳理、架构分析
 
-![](\img\juc_img\blockingQueue_02.bmp)
+![](img/juc/blockingQueue_02.bmp)
 
 
 
@@ -1263,9 +1263,13 @@ public class ReadWriteLockDemo {
 
 - PriorityBlockingQueue：支持优先级排序的无界阻塞队列。
 
+  > 是一个支持优先级的无界队列 。默认情况下元素采取自然顺序升序排列。 可以自定义实现compareTo()方法来指定元素进行排序规则，或者初始化 PriorityBlockingQueue 时，指定构造参数 Comparator 来对元素进行排序。需要注意的是不能保证同优先级元素的顺序。
+
 - DelayQueue：使用优先级队列实现的延迟无界阻塞队列。
 
 - **SynchronousQueue：不存储元素的阻塞队列，也即单个元素的队列。**
+
+  > 是一个不存储元素的阻塞队列。每一个 put 操作必须等待一个 take 操作，否则不能继续添加元素。SynchronousQueue 可以看成是一个传球手，负责把生产者线程处理的数据直接传递给消费者线程。队列本身并不存储任何元素，非常适合于传递性场景,比如在一个线程中使用的数据，传递给另 外 一 个 线 程 使 用 ， SynchronousQueue 的 吞 吐 量 高 于 LinkedBlockingQueue ArrayBlockingQueue。
 
 - LinkedTransferQueue：由链表组成的无界阻塞队列。
 
@@ -1275,7 +1279,7 @@ public class ReadWriteLockDemo {
 
 ## 11.4 BlockingQueue的核心方法
 
-![](\img\juc_img\blockingQueue_03.bmp)
+![](img/juc/blockingQueue_03.bmp)
 
 | 抛出异常 | 当阻塞队列满时，再往队列里add插入元素会抛IllegalStateException:Queue full<br/>当阻塞队列空时，再往队列里remove移除元素会抛NoSuchElementException |
 | -------- | :----------------------------------------------------------- |
@@ -1361,7 +1365,7 @@ public class BlockingQueueDemo {
 
 ### 12.2.1 线程池架构
 
-![](E:\code\review\img\juc_img\ThreadPool_01.bmp)
+![](img\juc_img\ThreadPool_01.bmp)
 
  
 
@@ -1596,7 +1600,7 @@ public class MyThreadPoolDemo {
 
 ## 12.4  线程池底层的工作原理
 
-![](\img\juc_img\ThreadPool_03.bmp)
+![](img/juc/ThreadPool_yuanli.bmp)
 
 1、在创建了线程池后，开始等待请求。
 
@@ -1655,7 +1659,7 @@ public class MyThreadPoolDemo {
 
 **是一个都不用，我们工作中只能使用自定义的**
 
-![](\img\juc_img\ThreadPool_05.bmp)
+![](img/juc/ThreadPool_create.bmp)
 
 ### 12.5.3 自定义线程池（四种拒绝策略对比）
 
@@ -2211,11 +2215,11 @@ public class CompletableFutureDemo {
 
 > atomicInteger.getAndIncrement()
 
-![](img/Cas_getandIncreent.png)
+![](img/juc/Cas_getandIncreent.png)
 
 ## 16.2 unSafe
 
-<img src="img/unsafe_01.png" style="zoom:67%;" />
+<img src="img/juc/unsafe_01.png" style="zoom:67%;" />
 
 unsafe是CAS的核心类 ,由于Java 方法无法直接访问底层 ,需要通过本地(native)方法来访问，**注意UnSafe类中所有的方法都是native修饰的,也就是说UnSafe类中的方法都是直接调用操作底层资源执行响应的任务**，基于该类可以直接操作特额定的内存数据.UnSafe类在于**sun.misc**包中,其内部方法操作可以向C的指针一样直接操作内存,因为Java中CAS操作的助兴依赖于UNSafe类的方法.
 
@@ -2225,13 +2229,13 @@ unsafe是CAS的核心类 ,由于Java 方法无法直接访问底层 ,需要通�
 
 ## 16.3 使用atomicInteger.getAndIncrement()举例
 
-![](/img/unsafe_AutomicInteger.png)
+![](img/juc/unsafe_AutomicInteger.png)
 
 - 使用当前对象的值和var5比较
 - 如果相同，更新var5 的值并且返回
 - 如果不同，继续取值然后进行比较，直到更新完成
 
-![](/img/CAS_example.png)
+![](img/juc/CAS_example.png)
 
 ## 16.4 CAS的缺点
 
@@ -2243,7 +2247,7 @@ unsafe是CAS的核心类 ,由于Java 方法无法直接访问底层 ,需要通�
 
 ## 17.1 什么是ABA问题
 
-![](img/juc_img/ABA_01.bmp)
+![](img/juc/ABA_01.bmp)
 
 ## 17.2 原子引用
 
@@ -2251,7 +2255,7 @@ AtomicInteger 只能操作一个数字
 
 AutmicReference 就可以是对象拥有原子性
 
-![](img/juc_img/AtomicReference.png)
+![](img/juc/AtomicReference.png)
 
 ## 17.3 解决ABA问题AtomicStampedReference
 
@@ -2737,7 +2741,7 @@ protected final int tryAcquireShared(int unused) {
 
 也就是说 ThreadLocal 本身并不存储线程的变量值，它只是一个工具，用来维护线程内部的 Map，帮助存和取变量。
 
-![](img/juc_img/ThreadLocal_01.jpg)
+![](img/juc/ThreadLocal_01.jpg)
 
 ##  19.3 ThreadLocal 如何解决 Hash 冲突？ 
 
@@ -2776,7 +2780,7 @@ ThreadLocal 在 ThreadLocalMap 中是以一个弱引用身份被 Entry 中的 Ke
 >
 > **这个机制AQS采用CLH队列来实现的，即将暂时获取不到锁子的线程加入到队列中**
 
-![](img/juc_img/AQS_clh.png)
+![](img/juc/AQS_clh.png)
 
  AQS 使用一个 int 成员变量来表示同步状态，通过内置的 FIFO 队列来完成获取资源线程的排队工作。AQS 使用 CAS 对该同步状态进行原子操作实现对其值的修改 
 

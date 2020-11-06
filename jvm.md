@@ -389,6 +389,24 @@ MajorGC 采用<font color='red'> 标记清除算法 </font>：首先扫描一次
 
 6. 当对象在 Survivor 区躲过一次 GC 后，其年龄就会+1。<font color='cornflowerblue'>默认情况下年龄到达 15 的对象会被移到老生代中</font>
 
+### 1.3.3 MinorGC触发的条件
+
+**一般是Eden区满时触发**
+
+### 1.3.4 MajorGC触发的条件
+
+- 执行System.gc()
+
+>  此方法的调用是建议JVM进行Full GC,虽然只是建议而非一定,但很多情况下它会触发Major GC 
+
+- 老年代空间不足
+
+-  通过Minor GC后进入老年代的平均大小大于老年代的可用内存 
+
+-  由Eden区、From Space区向To Space区复制时，对象大小大于To Space可用内存，则把该对象转存到老年代，且老年代的可用内存小于该对象大小 
+
+
+
 ## 2.4 java中的四种引用类型
 
 <img src="img/jvm/jvm_reference_01.png" style="zoom: 50%;" />
