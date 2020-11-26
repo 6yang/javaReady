@@ -30,7 +30,7 @@
 
 ### 1.1.4  堆（线程公有）
 
-是被线程共享的一块内存区域，<font color='red'> 创建的对象和数组都保存在 Java 堆内存中，也是垃圾收集器进行垃圾收集的最重要的内存区域 </font>。由于现代 VM 采用**分代收集算法**, 因此 Java 堆从 GC 的角度还可以细分为: **新生代**(Eden区、FromSu881qui,zrvivor区和 ToSurvivor区)和**老年代。**
+是被线程共享的一块内存区域，<font color='red'> 创建的对象和数组都保存在 Java 堆内存中，也是垃圾收集器进行垃圾收集的最重要的内存区域 </font>。由于现代 VM 采用**分代收集算法**, 因此 Java 堆从 GC 的角度还可以细分为: **新生代**(Eden区、FromSurvivor区和 ToSurvivor区)和**老年代。**
 
 
 
@@ -310,7 +310,7 @@ MajorGC 采用<font color='red'> 标记清除算法 </font>：首先扫描一次
 为了解决引用计数法的循环引用问题，Java 使用了可达性分析的方法。<font color='cornflowerblue'>通过一系列的“GC roots”对象作为起点搜索</font>。如果在“GC roots”和一个对象之间没有可达路径，则称该对象是不可达的。
  要注意的是，不可达对象不等价于可回收对象，<font color='red'>不可达对象变为可回收对象至少要经过两次标记过程</font>。两次标记后仍然是可回收对象，则将面临回收。
 
-<font color='cornflowerblue'>GC roots（GC根）</font>
+##### <font color='cornflowerblue'>GC roots（GC根）</font>
 
 > 1.栈（栈帧的本地变量表）中引用的对象
 >
@@ -407,49 +407,49 @@ MajorGC 采用<font color='red'> 标记清除算法 </font>：首先扫描一次
 
 
 
-## 2.4 java中的四种引用类型
+## 1.4 java中的四种引用类型
 
 <img src="img/jvm/jvm_reference_01.png" style="zoom: 50%;" />
 
-### 2.4.1 强引用
+### 1.4.1 强引用
 
 在 Java 中最常见的就是强引<font color='cornflowerblue'>用，把一个对象赋给一个引用变量，这个引用变量就是一个强引用。当一个对象被强引用变量引用时</font>，它处于可达状态，它是不可能被垃圾回收机制回收的，即使该对象以后永远都不会被用到 JVM 也不会回收。因此强引用是造成 Java 内存泄漏的主要原因之一。
 
-### 2.4.2 软引用
+### 1.4.2 软引用
 
 软引用需要用 SoftReference 类来实现，对于只有软引用的对象来说，<font color='cornflowerblue'> 当系统内存足够时它不会被回收，当系统内存空间不足时它会被回收 </font>。软引用通常用在对内存敏感的程序中。
 
-### 2.4.3 弱引用 
+### 1.4.3 弱引用 
 
 弱引用需要用 WeakReference 类来实现，它比软引用的生存期更短，对于只有弱引用的对象来说，<font color='cornflowerblue'>只要垃圾回收机制一运行，不管 JVM 的内存空间是否足够，总会回收该对象占用的内存。</font>
 
-### 2.4.4 虚引用
+### 1.4.4 虚引用
 
 虚引用需要 PhantomReference 类来实现，<font color='cornflowerblue'>它不能单独使用，必须和引用队列联合使用。虚引用的主要作用是跟踪对象被垃圾回收的状态。</font>
 
 
 
-## 2.5  **GC 分代收集算法 VS 分区收集算法**  
+## 1.5  **GC 分代收集算法 VS 分区收集算法**  
 
-### 2.5.1 分代收集算法
+### 1.5.1 分代收集算法
 
 当前主流 VM 垃圾收集都采用”分代收集”(Generational Collection)算法, <font color='cornflowerblue'> 这种算法会根据对象存活周期的不同将内存划分为几块, 如 JVM 中的 新生代、老年代、永久代，这样就可以根据各年代特点分别采用最适当的 GC 算法 </font>
 
-#### **2.5.1.1.**   **在新生代-复制算法**
+#### **1.5.1.1.**   **在新生代-复制算法**
 
 每次垃圾收集都能发现大批对象已死, 只有少量存活. 因此选用<font color='cornflowerblue'>复制算法</font>, 只需要付出少量 存活对象的复制成本就可以完成收集.
 
-#### **2.5.1.2.**   **在老年代-标记整理算法**
+#### **1.5.1.2.**   **在老年代-标记整理算法**
 
 <font color='cornflowerblue'> 因为对象存活率高、没有额外空间对它进行分配担保, 就必须采用“标记—清理”或“标记—整理”算法来进行回收 </font>, 不必进行内存复制, 且直接腾出空闲内存.
 
-### **2.5.2.** **分区收集算法**
+### **1.5.2.** **分区收集算法**
 
 分区算法则将整个<font color='cornflowerblue'> 堆空间划分为连续的不同小区间, 每个小区间独立使用, 独立回收 </font>. 这样做的好处是可以控制一次回收多少个小区间 , 根据目标停顿时间, 每次合理地回收若干个小区间(而不是整个堆), 从而减少一次 GC 所产生的停顿。
 
 
 
-## 2.6 GC垃圾收集器
+## 1.6 GC垃圾收集器
 
 [Java](http://lib.csdn.net/base/javase) 堆内存被划分为新生代和年老代两部分，新生代主要使用复制和标记-清除垃圾回收[算法](http://lib.csdn.net/base/datastructure)；年老代主要使用标记-整理垃圾回收算法，因此 java 虚拟中针对新生代和年老代分别提供了多种不
 
@@ -457,13 +457,13 @@ MajorGC 采用<font color='red'> 标记清除算法 </font>：首先扫描一次
 
 ​                    <img src="img/jvm/lajishoujiqi.jpg" alt="img" style="zoom:50%;" />     
 
-### 2.6.1   Serial 垃圾收集器（单线程、复制算法）
+### 1.6.1   Serial 垃圾收集器（单线程、复制算法）
 
 <font color='cornflowerblue'>Serial（英文连续）是最基本垃圾收集器，使用复制算法，</font>曾经是 JDK1.3.1 之前新生代唯一的垃圾收集器。<font color='red'> Serial 是一个单线程的收集器，它不但只会使用一个 CPU 或一条线程去完成垃圾收集工作，并且在进行垃圾收集的同时，必须暂停其他所有的工作线程，直到垃圾收集结束。 </font>
 
 Serial 垃圾收集器虽然在收集垃圾过程中需要暂停所有其他的工作线程，但是它简单高效，对于限定单个 CPU 环境来说，没有线程交互的开销，可以获得最高的单线程垃圾收集效率，因此 Serial垃圾收集器依然是<font color='cornflowerblue'> java 虚拟机运行在 Client 模式下默认的新生代垃圾收集器。</font>
 
-### 2.6.2  **ParNew 垃圾收集器（Serial+多线程）**  
+### 1.6.2  **ParNew 垃圾收集器（Serial+多线程）**  
 
 ParNew 垃圾收集器其实是 <font color='cornflowerblue'>Serial 收集器的多线程版本</font>，也使用复制算法，除了使用多线程进行垃圾收集之外，其余的行为和 Serial 收集器完全一样，ParNew 垃圾收集器在垃圾收集过程中同样也要暂停所有其他的工作线程。
 
@@ -473,11 +473,11 @@ ParNew 收集器默认开启和 CPU 数目相同的线程数，可以通过-XX:P
 
 <font color='cornflowerblue'>ParNew 虽然是除了多线程外和 Serial 收集器几乎完全一样，但是 ParNew 垃圾收集器是很多 java虚拟机运行在 Server 模式下新生代的默认垃圾收集器。</font>
 
-### 2.6.3  Parallel Scavenge 收集器（多线程复制算法、高效）
+### 1.6.3  Parallel Scavenge 收集器（多线程复制算法、高效）
 
 Parallel Scavenge 收集器也是一个新生代垃圾收集器，同样使用复制算法，也是一个多线程的垃圾收集器，<font color='cornflowerblue'> 它重点关注的是程序达到一个可控制的吞吐量 </font>（Thoughput，CPU 用于运行用户代码的时间/CPU 总消耗时间，即<font color='red'> 吞吐量=运行用户代码时间/(运行用户代码时间+垃圾收集时间)） </font>，高吞吐量可以最高效率地利用 CPU 时间，尽快地完成程序的运算任务，主要适用于在后台运算而不需要太多交互的任务。<font color='cornflowerblue'>自适应调节策略也是 ParallelScavenge 收集器与 ParNew 收集器的一个重要区别。</font>
 
-### 2.6.4  **Serial** **Old** **收集器（单线程标记整理算法** **）**
+### 1.6.4  **Serial** **Old** **收集器（单线程标记整理算法** **）**
 
 <font color='cornflowerblue'> Serial Old 是 Serial 垃圾收集器年老代版本</font>，它同样是个单线程的收集器，使用标记-整理算法，这个收集器也主要是owerblue'>运行在 Client 默认的 java 虚拟机默认的年老代垃圾收集器。</font>
 
@@ -493,7 +493,7 @@ Parallel Scavenge 收集器也是一个新生代垃圾收集器，同样使用�
 
 ​                   <img src="img/jvm/serialoldandparnew.jpg" alt="img" style="zoom:50%;" />     
 
-### 2.6.5   **Parallel Old 收集器（多线程标记整理算法）**  
+### 1.6.5   **Parallel Old 收集器（多线程标记整理算法）**  
 
 Parallel Old 收集器是 Parallel Scavenge 的年老代版本，使用多线程的标记-整理算法，在 JDK1.6才开始提供。
 
@@ -503,9 +503,9 @@ Parallel Old 收集器是 Parallel Scavenge 的年老代版本，使用多线程
 
 ​                   <img src="img/jvm/pallerold.jpg" alt="img" style="zoom:50%;" />     
 
-### 2.6.6  **CMS 收集器（多线程标记清除算法）**
+### 1.6.6  **CMS 收集器（多线程标记清除算法）**
 
-Concurrent mark sweep(CMS)收集器是一种年老代垃圾收集器，其最<font color='cornflowerblue'>主要目标是获取最短垃圾回收停顿时间</font>，和其他年老代使用标记-整理算法不同，它使用多线程的标记-清除算法。最短的垃圾收集停顿时间可以为交互比较高的程序提高用户体验。
+Concurrent mark sweep(CMS)收集器是一种年老代垃圾收集器，其最<font color='cornflowerblue'>主要目标是获取最短垃圾回收停顿时间</font>，和其他年老代使用标记-整理算法不同，它使用<font color='#f37b1d'>多线程的标记-清除算法</font>。最短的垃圾收集停顿时间可以为交互比较高的程序提高用户体验。
 
 CMS 工作机制相比其他的垃圾收集器来说更复杂，整个过程分为以下 4 个阶段：
 
@@ -529,7 +529,7 @@ CMS 工作机制相比其他的垃圾收集器来说更复杂，整个过程分�
 
 ​                   ![img](img/jvm/cms.jpg)     
 
-### 2.6.7  G1 收集器
+### 1.6.7  G1 收集器
 
 Garbage first 垃圾收集器是目前垃圾收集器理论发展的最前沿成果，相比与 CMS 收集器，G1 收集器两个最突出的改进是：
 
@@ -568,21 +568,21 @@ Garbage first 垃圾收集器是目前垃圾收集器理论发展的最前沿成
 
 **最大好处是化整为零，避免全内存扫描，只需要按照区域来进行扫描即可**
 
-## 2.7 jvm 类加载机制
+## 1.7 jvm 类加载机制
 
 JVM 类加载机制分为五个部分：<font color='red'> 加载，验证，准备，解析，初始化 </font>，下面我们就分别来看一下这五个过程。
 
 ​                   ![img](img\jvm_classGet_01.png)     
 
-### 2.7.1 加载
+### 1.7.1 加载
 
 加载是类加载过程中的一个阶段，<font color='cornflowerblue'> 这个阶段会在内存中生成一个代表这个类的 java.lang.Class 对象，作为方法区这个类的各种数据的入口 </font>。注意这里不一定非得要从一个 Class 文件获取，这里既可以从 ZIP 包中读取（比如从 jar 包和 war 包中读取），也可以在运行时计算生成（动态代理），也可以由其它文件生成（比如将 JSP 文件转换成对应的 Class 类）。
 
-### 2.7.2 验证
+### 1.7.2 验证
 
 这一阶段的主要目的是为了<font color='cornflowerblue'>确保 Class 文件的字节流中包含的信息是否符合当前虚拟机的要求</font>，并且不会危害虚拟机自身的安全。 
 
-### 2.7.3 准备
+### 1.7.3 准备
 
 准备阶段是正式<font color='cornflowerblue'>为类变量分配内存并设置类变量的初始值阶段</font>，即<font color='cornflowerblue'> 在方法区中分配这些变量所使用的内存空间 </font>。注意这里所说的初始值概念，比如一个类变量定义为：
 
@@ -596,7 +596,7 @@ JVM 类加载机制分为五个部分：<font color='red'> 加载，验证，准
 
   在编译阶段会为 v 生成 ConstantValue 属性，<font color='cornflowerblue'>在准备阶段虚拟机会根据 ConstantValue 属性将 v赋值为 8080  </font>
 
-### 2.7.4 解析
+### 1.7.4 解析
 
 解析阶段是指<font color='cornflowerblue'>虚拟机将常量池中的符号引用替换为直接引用的过程</font>。符号引用就是 class 文件中的：
 
@@ -616,7 +616,7 @@ JVM 类加载机制分为五个部分：<font color='red'> 加载，验证，准
 
 > 直接引用可以是<font color='cornflowerblue'>指向目标的指针，相对偏移量或是一个能间接定位到目标的句柄</font>。如果有了直接引用，<font color='cornflowerblue'> 那引用的目标必定已经在内存中存在 </font>。
 
-### 2.7.5 初始化
+### 1.7.5 初始化
 
 初始化阶段是类加载最后一个阶段，前面的类加载阶段之后，除了在加载阶段可以自定义类加载
 
@@ -626,7 +626,7 @@ JVM 类加载机制分为五个部分：<font color='red'> 加载，验证，准
 
 
 
-## 2.8  类装载器ClassLoader
+## 1.8  类装载器ClassLoader
 
  	
 
@@ -636,7 +636,7 @@ JVM 类加载机制分为五个部分：<font color='red'> 加载，验证，准
 
 ![](img\jvm\classloader_01.png)
 
-### 2.8.1 jvm 类加载器3+1
+### 1.8.1 jvm 类加载器3+1
 
 
 
@@ -702,7 +702,7 @@ public class MyObject {
 
 
 
-### 1.1.3 双亲委派机制
+### 1.8.2  双亲委派机制
 
 <font color='cornflowerblue'> 当一个类收到了类加载请求，他首先不会尝试自己去加载这个类，而是把这个请求委派给父类去完成 </font>，每一个层次类加载器都是如此，因此所有的加载请求都应该传送到启动类加载，<font color='cornflowerblue'>只有当父类加载器反馈自己无法完成这个请求的时候（在它的加载路径下没有找到所需加载的Class）</font>，子类加载器才会尝试自己去加载。
 
@@ -712,5 +712,29 @@ public class MyObject {
 
 ​                   ![img](img/jvm/shuangqingweipai.jpg)     
 
+### 1.8.3 ５LoadClass和ForName的区别
+
+-  **Class.forName得到的class是已经初始化完成的**
 
 
+-  **ClassLoder.LoadClass得到的class是还没有链接的** 
+
+> spring ioc 资源加载器获取要加载的资源的时候，即读取一些资源的配置文件的时候 
+>
+> 需要classloader.Loadclass来加载，实现lazy loader 延迟加载
+>
+> 即加载类的时候不需要初始化，等到需要的时候才进行链接加载
+
+## 1.9 OOM
+
+### 1.9.1 什么情况下会爆出OOM 
+
+栈：递归太深的时候就会出现OOM
+
+堆：堆空间太小的时候，会出现OOM XMS/XMX来调整堆内存空间大小
+
+### 1.9.3 一个线程爆出OOM之后，其他线程和进程的状态 
+
+其他线程还能够正常运行
+
+当一个线程爆出OOM时，它所占据的内存资源会全部被释放掉，从而不会影响其他线程的运行！

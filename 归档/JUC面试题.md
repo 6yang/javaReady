@@ -1176,11 +1176,11 @@ tryReleaseShared(int)//共享方式。尝试释放资源，成功则返回true�
 >
 > AQS内部通过维护一个同步队列来获取锁的排队工作
 
-![](img/AQS_node.png)
+![](img/juc/AQS_node.png)
 
 **非公平锁的实现**
 
-![](img/Reentrant_lock_unfair.png)
+![](img/juc/Reentrant_lock_unfair.png)
 
 **公平锁**
 
